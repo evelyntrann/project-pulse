@@ -5,9 +5,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SectionRepository extends JpaRepository<SectionEntity, Long> {
 
     @Query("SELECT s FROM SectionEntity s LEFT JOIN FETCH s.teams WHERE (:name IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%'))) ORDER BY s.name DESC")
     List<SectionEntity> findByNameContaining(@Param("name") String name);
+
+    @Query("SELECT s FROM SectionEntity s LEFT JOIN FETCH s.teams WHERE s.id = :id")
+    Optional<SectionEntity> findByIdWithTeams(@Param("id") Long id);
 }
