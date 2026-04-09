@@ -3,6 +3,7 @@ package com.projectpulse.section;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
+import com.projectpulse.section.dto.SectionUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,36 @@ public class SectionService {
         // TODO: validate rubricId exists once Angel builds the rubric package (UC-1)
 
         SectionEntity section = new SectionEntity();
+        section.setName(request.name());
+        section.setStartDate(request.startDate());
+        section.setEndDate(request.endDate());
+        section.setRubricId(request.rubricId());
+
+        SectionEntity saved = sectionRepository.save(section);
+
+        return new SectionDetailResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getStartDate(),
+                saved.getEndDate(),
+                saved.getRubricId(),
+                List.of(),
+                List.of(),
+                List.of()
+        );
+    }
+
+    @Transactional
+    public SectionDetailResponse updateSection(Long id, SectionUpdateRequest request) {
+        SectionEntity section = sectionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        if (!section.getName().equals(request.name()) && sectionRepository.existsByName(request.name())) {
+            throw new DuplicateSectionException("Section '" + request.name() + "' already exists");
+        }
+
+        // TODO: validate rubricId exists once Angel builds the rubric package (UC-1)
+
         section.setName(request.name());
         section.setStartDate(request.startDate());
         section.setEndDate(request.endDate());

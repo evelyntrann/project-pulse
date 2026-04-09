@@ -53,4 +53,7 @@ export const sectionsApi = {
 
   createSection: (data: SectionCreateRequest) =>
     api.post<{ success: boolean; data: SectionDetail }>('/sections', data),
+
+  updateSection: (id: number, data: SectionCreateRequest) =>
+    api.put<{ success: boolean; data: SectionDetail }>(`/sections/${id}`, data),
 }
