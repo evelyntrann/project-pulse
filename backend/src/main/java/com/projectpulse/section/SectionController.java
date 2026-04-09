@@ -4,6 +4,7 @@ import com.projectpulse.common.ApiResponse;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
+import com.projectpulse.section.dto.SectionUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,14 @@ public class SectionController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SectionDetailResponse>> createSection(@Valid @RequestBody SectionCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(sectionService.createSection(request)));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<SectionDetailResponse>> updateSection(
+            @PathVariable Long id,
+            @Valid @RequestBody SectionUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(sectionService.updateSection(id, request)));
     }
 
     @GetMapping("/{id}")
