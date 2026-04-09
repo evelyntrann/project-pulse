@@ -7,17 +7,30 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login',
+      redirect: '/sections',
     },
     {
       path: '/login',
       component: LoginView,
       meta: { guestOnly: true },
     },
+    // Authenticated routes — wrapped in AppLayout
     {
-      path: '/dashboard',
-      component: () => import('@/views/DashboardView.vue'),
+      path: '/',
+      component: () => import('@/components/AppLayout.vue'),
       meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'sections',
+          component: () => import('@/views/sections/SectionListView.vue'),
+          meta: { requiresAuth: true, role: 'ADMIN' },
+        },
+        {
+          path: 'teams',
+          component: () => import('@/views/DashboardView.vue'), // placeholder until Micah builds teams
+          meta: { requiresAuth: true },
+        },
+      ],
     },
     {
       path: '/forbidden',
@@ -26,15 +39,24 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return '/login'
   }
 
+  // Token exists but user not loaded yet (e.g. page refresh) — fetch it first
+  if (auth.isLoggedIn && !auth.user) {
+    await auth.fetchMe()
+  }
+
   if (to.meta.guestOnly && auth.isLoggedIn) {
-    return '/dashboard'
+    return '/sections'
+  }
+
+  if (to.meta.role && auth.user?.role !== to.meta.role) {
+    return '/forbidden'
   }
 })
 
