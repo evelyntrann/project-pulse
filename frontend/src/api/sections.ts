@@ -35,6 +35,13 @@ export interface SectionDetail {
   unassignedInstructors: UserDto[]
 }
 
+export interface SectionCreateRequest {
+  name: string
+  startDate: string
+  endDate: string
+  rubricId: number
+}
+
 export const sectionsApi = {
   findSections: (name?: string) =>
     api.get<{ success: boolean; data: SectionSummary[] }>('/sections', {
@@ -43,4 +50,7 @@ export const sectionsApi = {
 
   getSection: (id: number) =>
     api.get<{ success: boolean; data: SectionDetail }>(`/sections/${id}`),
+
+  createSection: (data: SectionCreateRequest) =>
+    api.post<{ success: boolean; data: SectionDetail }>('/sections', data),
 }

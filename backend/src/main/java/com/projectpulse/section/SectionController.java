@@ -1,8 +1,11 @@
 package com.projectpulse.section;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,12 @@ public class SectionController {
     public ResponseEntity<ApiResponse<List<SectionSummaryResponse>>> findSections(
             @RequestParam(required = false) String name) {
         return ResponseEntity.ok(ApiResponse.ok(sectionService.findSections(name)));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<SectionDetailResponse>> createSection(@Valid @RequestBody SectionCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(sectionService.createSection(request)));
     }
 
     @GetMapping("/{id}")
