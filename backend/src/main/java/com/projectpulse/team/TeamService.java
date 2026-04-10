@@ -1,8 +1,11 @@
 package com.projectpulse.team;
 
+import com.projectpulse.section.SectionRepository;
+import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -11,9 +14,39 @@ import java.util.NoSuchElementException;
 public class TeamService {
 
     private final TeamRepository teamRepository;
+    private final SectionRepository sectionRepository;
 
-    public TeamService(TeamRepository teamRepository) {
+    public TeamService(TeamRepository teamRepository, SectionRepository sectionRepository) {
         this.teamRepository = teamRepository;
+        this.sectionRepository = sectionRepository;
+    }
+
+    @Transactional
+    public TeamDetailResponse createTeam(TeamCreateRequest request) {
+        if (teamRepository.existsByName(request.name())) {
+            throw new DuplicateTeamException("Team '" + request.name() + "' already exists");
+        }
+
+        var section = sectionRepository.findById(request.sectionId())
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        TeamEntity team = new TeamEntity();
+        team.setName(request.name());
+        team.setDescription(request.description());
+        team.setWebsiteUrl(request.websiteUrl());
+        team.setSection(section);
+
+        TeamEntity saved = teamRepository.save(team);
+
+        return new TeamDetailResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getDescription(),
+                saved.getWebsiteUrl(),
+                new TeamDetailResponse.SectionDto(section.getId(), section.getName()),
+                List.of(),
+                List.of()
+        );
     }
 
     public TeamDetailResponse getTeam(Long id) {

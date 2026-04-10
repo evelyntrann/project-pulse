@@ -1,6 +1,7 @@
 package com.projectpulse.common;
 
 import com.projectpulse.section.DuplicateSectionException;
+import com.projectpulse.team.DuplicateTeamException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateSectionException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateSection(DuplicateSectionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateTeamException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateTeam(DuplicateTeamException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
     }
 
