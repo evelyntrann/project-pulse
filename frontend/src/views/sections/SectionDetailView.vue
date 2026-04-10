@@ -166,6 +166,11 @@
         </v-list>
       </v-card>
     </template>
+
+    <!-- Success snackbar -->
+    <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -180,12 +185,19 @@ const route = useRoute()
 const section = ref<SectionDetail | null>(null)
 const loading = ref(false)
 const error = ref('')
+const snackbar = ref(false)
+const snackbarMessage = ref('')
 
 const totalMembers = computed(() =>
   section.value?.teams.reduce((sum, t) => sum + t.members.length, 0) ?? 0
 )
 
 onMounted(async () => {
+  if (route.query.saved === 'weeks') {
+    snackbarMessage.value = 'Active weeks have been saved successfully.'
+    snackbar.value = true
+  }
+
   loading.value = true
   try {
     const res = await sectionsApi.getSection(Number(route.params.id))

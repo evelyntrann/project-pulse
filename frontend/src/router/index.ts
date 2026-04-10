@@ -47,7 +47,7 @@ const router = createRouter({
         },
         {
           path: 'teams',
-          component: () => import('@/views/DashboardView.vue'), // placeholder until Micah builds teams
+          component: () => import('@/views/teams/TeamListView.vue'),
           meta: { requiresAuth: true },
         },
       ],

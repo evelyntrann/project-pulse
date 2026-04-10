@@ -181,7 +181,7 @@ async function submit() {
   try {
     await sectionsApi.setActiveWeeks(Number(route.params.id), weeks.value)
     confirmDialog.value = false
-    router.push(`/sections/${route.params.id}`)
+    router.push(`/sections/${route.params.id}?saved=weeks`)
   } catch {
     submitError.value = 'Failed to save active weeks. Please try again.'
   } finally {
