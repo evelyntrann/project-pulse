@@ -1,10 +1,18 @@
 package com.projectpulse.team;
 
 import com.projectpulse.section.SectionRepository;
+import com.projectpulse.team.dto.AssignStudentsRequest;
 import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
 import com.projectpulse.team.dto.TeamUpdateRequest;
+import com.projectpulse.user.UserEntity;
+import com.projectpulse.user.UserRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +24,20 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final SectionRepository sectionRepository;
+    private final UserRepository userRepository;
+    private final JavaMailSender mailSender;
 
-    public TeamService(TeamRepository teamRepository, SectionRepository sectionRepository) {
+    @Value("${app.base-url}")
+    private String baseUrl;
+
+    public TeamService(TeamRepository teamRepository,
+                       SectionRepository sectionRepository,
+                       UserRepository userRepository,
+                       JavaMailSender mailSender) {
         this.teamRepository = teamRepository;
         this.sectionRepository = sectionRepository;
+        this.userRepository = userRepository;
+        this.mailSender = mailSender;
     }
 
     @Transactional
@@ -39,33 +57,13 @@ public class TeamService {
 
         TeamEntity saved = teamRepository.save(team);
 
-        return new TeamDetailResponse(
-                saved.getId(),
-                saved.getName(),
-                saved.getDescription(),
-                saved.getWebsiteUrl(),
-                new TeamDetailResponse.SectionDto(section.getId(), section.getName()),
-                List.of(),
-                List.of()
-        );
+        return toDetailResponse(saved);
     }
 
     public TeamDetailResponse getTeam(Long id) {
-        TeamEntity team = teamRepository.findById(id)
+        TeamEntity team = teamRepository.findByIdWithStudents(id)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));
-
-        return new TeamDetailResponse(
-                team.getId(),
-                team.getName(),
-                team.getDescription(),
-                team.getWebsiteUrl(),
-                new TeamDetailResponse.SectionDto(
-                        team.getSection().getId(),
-                        team.getSection().getName()
-                ),
-                List.of(), // members — populated when UC-12 is built
-                List.of()  // instructors — populated when UC-19 is built
-        );
+        return toDetailResponse(team);
     }
 
     @Transactional
@@ -82,21 +80,12 @@ public class TeamService {
         team.setWebsiteUrl(request.websiteUrl());
 
         TeamEntity saved = teamRepository.save(team);
-
-        return new TeamDetailResponse(
-                saved.getId(),
-                saved.getName(),
-                saved.getDescription(),
-                saved.getWebsiteUrl(),
-                new TeamDetailResponse.SectionDto(saved.getSection().getId(), saved.getSection().getName()),
-                List.of(),
-                List.of()
-        );
+        return toDetailResponse(saved);
     }
 
     public List<TeamSummaryResponse> findTeams(Long sectionId, String name) {
         // TODO: add instructorId filter once Angel builds user/instructor assignment (UC-19)
-        return teamRepository.findByFilters(sectionId, name).stream()
+        return teamRepository.findByFiltersWithStudents(sectionId, name).stream()
                 .map(team -> new TeamSummaryResponse(
                         team.getId(),
                         team.getName(),
@@ -104,9 +93,93 @@ public class TeamService {
                         team.getWebsiteUrl(),
                         team.getSection().getId(),
                         team.getSection().getName(),
-                        List.of(), // members — populated when UC-12 is built
-                        List.of()  // instructors — populated when UC-19 is built
+                        toSummaryMemberDtos(team.getStudents()),
+                        List.of() // instructors — populated when UC-19 is built
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public TeamDetailResponse assignStudents(Long teamId, AssignStudentsRequest request) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        List<UserEntity> students = userRepository.findAllById(request.studentIds());
+        if (students.size() != request.studentIds().size()) {
+            throw new NoSuchElementException("One or more students not found");
+        }
+
+        team.getStudents().addAll(
+                students.stream()
+                        .filter(s -> team.getStudents().stream().noneMatch(e -> e.getId().equals(s.getId())))
+                        .toList()
+        );
+
+        TeamEntity saved = teamRepository.save(team);
+
+        students.forEach(student -> sendAssignmentNotification(student, team));
+
+        return toDetailResponse(saved);
+    }
+
+    @Transactional
+    public TeamDetailResponse removeStudent(Long teamId, Long studentId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        team.getStudents().removeIf(s -> s.getId().equals(studentId));
+        TeamEntity saved = teamRepository.save(team);
+        return toDetailResponse(saved);
+    }
+
+    // ---- helpers ----
+
+    private TeamDetailResponse toDetailResponse(TeamEntity team) {
+        return new TeamDetailResponse(
+                team.getId(),
+                team.getName(),
+                team.getDescription(),
+                team.getWebsiteUrl(),
+                new TeamDetailResponse.SectionDto(
+                        team.getSection().getId(),
+                        team.getSection().getName()
+                ),
+                toMemberDtos(team.getStudents()),
+                List.of() // instructors — populated when UC-19 is built
+        );
+    }
+
+    private List<TeamDetailResponse.MemberDto> toMemberDtos(List<UserEntity> users) {
+        return users.stream()
+                .map(u -> new TeamDetailResponse.MemberDto(
+                        u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
+                .toList();
+    }
+
+    private List<TeamSummaryResponse.MemberDto> toSummaryMemberDtos(List<UserEntity> users) {
+        return users.stream()
+                .map(u -> new TeamSummaryResponse.MemberDto(
+                        u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
+                .toList();
+    }
+
+    private void sendAssignmentNotification(UserEntity student, TeamEntity team) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setTo(student.getEmail());
+            helper.setSubject("You've been assigned to a team — Peer Evaluation Tool");
+            helper.setText(
+                    "Hello " + student.getFirstName() + ",\n\n" +
+                    "You have been assigned to team \"" + team.getName() + "\".\n\n" +
+                    "Please log in to get started: " + baseUrl + "\n\n" +
+                    "Best regards,\nPeer Evaluation Tool Team",
+                    false
+            );
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            // Log but do not fail the assignment if mail fails
+            System.err.println("Failed to send assignment notification to " + student.getEmail() + ": " + e.getMessage());
+        }
     }
 }

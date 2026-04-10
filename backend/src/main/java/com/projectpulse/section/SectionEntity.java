@@ -1,6 +1,7 @@
 package com.projectpulse.section;
 
 import com.projectpulse.team.TeamEntity;
+import com.projectpulse.user.UserEntity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,6 +34,14 @@ public class SectionEntity {
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
     private List<TeamEntity> teams = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "section_students",
+            joinColumns = @JoinColumn(name = "section_id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
+    private List<UserEntity> enrolledStudents = new ArrayList<>();
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -53,4 +62,7 @@ public class SectionEntity {
 
     public List<TeamEntity> getTeams() { return teams; }
     public void setTeams(List<TeamEntity> teams) { this.teams = teams; }
+
+    public List<UserEntity> getEnrolledStudents() { return enrolledStudents; }
+    public void setEnrolledStudents(List<UserEntity> enrolledStudents) { this.enrolledStudents = enrolledStudents; }
 }

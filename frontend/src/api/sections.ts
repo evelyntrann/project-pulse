@@ -42,6 +42,13 @@ export interface SectionCreateRequest {
   rubricId: number
 }
 
+export interface EnrolledStudent {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+}
+
 export const sectionsApi = {
   findSections: (name?: string) =>
     api.get<{ success: boolean; data: SectionSummary[] }>('/sections', {
@@ -56,6 +63,9 @@ export const sectionsApi = {
 
   updateSection: (id: number, data: SectionCreateRequest) =>
     api.put<{ success: boolean; data: SectionDetail }>(`/sections/${id}`, data),
+
+  getEnrolledStudents: (id: number) =>
+    api.get<{ success: boolean; data: EnrolledStudent[] }>(`/sections/${id}/students`),
 
   getActiveWeeks: (id: number) =>
     api.get<{ success: boolean; data: ActiveWeek[] }>(`/sections/${id}/active-weeks`),

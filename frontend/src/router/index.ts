@@ -46,6 +46,11 @@ const router = createRouter({
           meta: { requiresAuth: true, role: 'ADMIN' },
         },
         {
+          path: 'sections/:id/assign-students',
+          component: () => import('@/views/sections/SectionAssignStudentsView.vue'),
+          meta: { requiresAuth: true, role: 'ADMIN' },
+        },
+        {
           path: 'sections/:id',
           component: () => import('@/views/sections/SectionDetailView.vue'),
           meta: { requiresAuth: true, role: 'ADMIN' },

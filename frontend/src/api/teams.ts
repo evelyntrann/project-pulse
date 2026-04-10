@@ -53,4 +53,10 @@ export const teamsApi = {
 
   updateTeam: (id: number, data: TeamUpdateRequest) =>
     api.put<{ success: boolean; data: TeamDetail }>(`/teams/${id}`, data),
+
+  assignStudents: (teamId: number, studentIds: number[]) =>
+    api.post<{ success: boolean; data: TeamDetail }>(`/teams/${teamId}/students`, { studentIds }),
+
+  removeStudent: (teamId: number, studentId: number) =>
+    api.delete<{ success: boolean; data: TeamDetail }>(`/teams/${teamId}/students/${studentId}`),
 }
