@@ -37,6 +37,14 @@
             Set Up Weeks
           </v-btn>
           <v-btn
+            variant="tonal"
+            prepend-icon="mdi-email-plus-outline"
+            class="mr-2"
+            @click="router.push(`/sections/${section.id}/invite-students`)"
+          >
+            Invite Students
+          </v-btn>
+          <v-btn
             color="primary"
             variant="tonal"
             prepend-icon="mdi-pencil"
@@ -195,6 +203,9 @@ const totalMembers = computed(() =>
 onMounted(async () => {
   if (route.query.saved === 'weeks') {
     snackbarMessage.value = 'Active weeks have been saved successfully.'
+    snackbar.value = true
+  } else if (route.query.saved === 'invited') {
+    snackbarMessage.value = 'Invitation emails have been sent successfully.'
     snackbar.value = true
   }
 
