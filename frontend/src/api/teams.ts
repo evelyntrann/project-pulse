@@ -35,6 +35,12 @@ export interface TeamCreateRequest {
   sectionId: number
 }
 
+export interface TeamUpdateRequest {
+  name: string
+  description: string
+  websiteUrl: string
+}
+
 export const teamsApi = {
   findTeams: (params: { sectionId?: number; name?: string }) =>
     api.get<{ success: boolean; data: TeamSummary[] }>('/teams', { params }),
@@ -44,4 +50,7 @@ export const teamsApi = {
 
   createTeam: (data: TeamCreateRequest) =>
     api.post<{ success: boolean; data: TeamDetail }>('/teams', data),
+
+  updateTeam: (id: number, data: TeamUpdateRequest) =>
+    api.put<{ success: boolean; data: TeamDetail }>(`/teams/${id}`, data),
 }

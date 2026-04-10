@@ -4,6 +4,7 @@ import com.projectpulse.section.SectionRepository;
 import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
+import com.projectpulse.team.dto.TeamUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,32 @@ public class TeamService {
                 ),
                 List.of(), // members — populated when UC-12 is built
                 List.of()  // instructors — populated when UC-19 is built
+        );
+    }
+
+    @Transactional
+    public TeamDetailResponse updateTeam(Long id, TeamUpdateRequest request) {
+        TeamEntity team = teamRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        if (teamRepository.existsByNameAndIdNot(request.name(), id)) {
+            throw new DuplicateTeamException("Team '" + request.name() + "' already exists");
+        }
+
+        team.setName(request.name());
+        team.setDescription(request.description());
+        team.setWebsiteUrl(request.websiteUrl());
+
+        TeamEntity saved = teamRepository.save(team);
+
+        return new TeamDetailResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getDescription(),
+                saved.getWebsiteUrl(),
+                new TeamDetailResponse.SectionDto(saved.getSection().getId(), saved.getSection().getName()),
+                List.of(),
+                List.of()
         );
     }
 

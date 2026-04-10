@@ -19,4 +19,6 @@ public interface TeamRepository extends JpaRepository<TeamEntity, Long> {
     );
 
     boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, Long id);
 }
