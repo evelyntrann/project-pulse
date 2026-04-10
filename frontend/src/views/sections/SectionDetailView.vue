@@ -29,6 +29,14 @@
         </v-col>
         <v-col cols="auto">
           <v-btn
+            variant="tonal"
+            prepend-icon="mdi-calendar-clock"
+            class="mr-2"
+            @click="router.push(`/sections/${section.id}/active-weeks`)"
+          >
+            Set Up Weeks
+          </v-btn>
+          <v-btn
             color="primary"
             variant="tonal"
             prepend-icon="mdi-pencil"

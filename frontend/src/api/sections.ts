@@ -56,4 +56,15 @@ export const sectionsApi = {
 
   updateSection: (id: number, data: SectionCreateRequest) =>
     api.put<{ success: boolean; data: SectionDetail }>(`/sections/${id}`, data),
+
+  getActiveWeeks: (id: number) =>
+    api.get<{ success: boolean; data: ActiveWeek[] }>(`/sections/${id}/active-weeks`),
+
+  setActiveWeeks: (id: number, weeks: ActiveWeek[]) =>
+    api.put<{ success: boolean; data: ActiveWeek[] }>(`/sections/${id}/active-weeks`, { weeks }),
+}
+
+export interface ActiveWeek {
+  weekStartDate: string
+  isActive: boolean
 }

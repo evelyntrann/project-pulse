@@ -1,6 +1,8 @@
 package com.projectpulse.section;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.section.dto.ActiveWeekResponse;
+import com.projectpulse.section.dto.ActiveWeeksRequest;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
@@ -42,6 +44,20 @@ public class SectionController {
             @PathVariable Long id,
             @Valid @RequestBody SectionUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(sectionService.updateSection(id, request)));
+    }
+
+    @GetMapping("/{id}/active-weeks")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ActiveWeekResponse>>> getActiveWeeks(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(sectionService.getActiveWeeks(id)));
+    }
+
+    @PutMapping("/{id}/active-weeks")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ActiveWeekResponse>>> setActiveWeeks(
+            @PathVariable Long id,
+            @Valid @RequestBody ActiveWeeksRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(sectionService.setActiveWeeks(id, request)));
     }
 
     @GetMapping("/{id}")
