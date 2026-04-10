@@ -101,6 +101,11 @@
         </v-list>
       </v-card>
     </template>
+
+    <!-- Save success notification -->
+    <v-snackbar v-model="savedSnackbar" color="success" timeout="3000" location="bottom">
+      Team updated successfully.
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -117,6 +122,7 @@ const authStore = useAuthStore()
 const team = ref<TeamDetail | null>(null)
 const loading = ref(false)
 const error = ref('')
+const savedSnackbar = ref(false)
 
 onMounted(async () => {
   loading.value = true
@@ -127,6 +133,9 @@ onMounted(async () => {
     error.value = 'Team not found or failed to load'
   } finally {
     loading.value = false
+  }
+  if (route.query.saved === '1') {
+    savedSnackbar.value = true
   }
 })
 </script>
