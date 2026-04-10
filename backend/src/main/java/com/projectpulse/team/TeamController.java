@@ -1,6 +1,7 @@
 package com.projectpulse.team;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,5 +25,11 @@ public class TeamController {
             @RequestParam(required = false) Long sectionId,
             @RequestParam(required = false) String name) {
         return ResponseEntity.ok(ApiResponse.ok(teamService.findTeams(sectionId, name)));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<TeamDetailResponse>> getTeam(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(teamService.getTeam(id)));
     }
 }

@@ -1,9 +1,11 @@
 package com.projectpulse.team;
 
+import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class TeamService {
@@ -12,6 +14,24 @@ public class TeamService {
 
     public TeamService(TeamRepository teamRepository) {
         this.teamRepository = teamRepository;
+    }
+
+    public TeamDetailResponse getTeam(Long id) {
+        TeamEntity team = teamRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        return new TeamDetailResponse(
+                team.getId(),
+                team.getName(),
+                team.getDescription(),
+                team.getWebsiteUrl(),
+                new TeamDetailResponse.SectionDto(
+                        team.getSection().getId(),
+                        team.getSection().getName()
+                ),
+                List.of(), // members — populated when UC-12 is built
+                List.of()  // instructors — populated when UC-19 is built
+        );
     }
 
     public List<TeamSummaryResponse> findTeams(Long sectionId, String name) {

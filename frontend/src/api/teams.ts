@@ -18,7 +18,20 @@ export interface TeamSummary {
   instructors: TeamMember[]
 }
 
+export interface TeamDetail {
+  id: number
+  name: string
+  description: string | null
+  websiteUrl: string | null
+  section: { id: number; name: string }
+  members: TeamMember[]
+  instructors: TeamMember[]
+}
+
 export const teamsApi = {
   findTeams: (params: { sectionId?: number; name?: string }) =>
     api.get<{ success: boolean; data: TeamSummary[] }>('/teams', { params }),
+
+  getTeam: (id: number) =>
+    api.get<{ success: boolean; data: TeamDetail }>(`/teams/${id}`),
 }

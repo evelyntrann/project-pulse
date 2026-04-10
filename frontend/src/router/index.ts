@@ -50,6 +50,11 @@ const router = createRouter({
           component: () => import('@/views/teams/TeamListView.vue'),
           meta: { requiresAuth: true },
         },
+        {
+          path: 'teams/:id',
+          component: () => import('@/views/teams/TeamDetailView.vue'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {
