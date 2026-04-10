@@ -5,6 +5,7 @@ import com.projectpulse.section.dto.ActiveWeekResponse;
 import com.projectpulse.section.dto.ActiveWeeksRequest;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
+import com.projectpulse.section.dto.SectionStudentResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
 import com.projectpulse.section.dto.SectionUpdateRequest;
 import jakarta.validation.Valid;
@@ -64,5 +65,11 @@ public class SectionController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SectionDetailResponse>> getSection(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(sectionService.getSection(id)));
+    }
+
+    @GetMapping("/{id}/students")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<SectionStudentResponse>>> getEnrolledStudents(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(sectionService.getEnrolledStudents(id)));
     }
 }

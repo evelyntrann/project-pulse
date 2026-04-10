@@ -1,6 +1,7 @@
 package com.projectpulse.team;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.team.dto.AssignStudentsRequest;
 import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
@@ -49,5 +50,21 @@ public class TeamController {
             @PathVariable Long id,
             @Valid @RequestBody TeamUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(teamService.updateTeam(id, request)));
+    }
+
+    @PostMapping("/{id}/students")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TeamDetailResponse>> assignStudents(
+            @PathVariable Long id,
+            @Valid @RequestBody AssignStudentsRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(teamService.assignStudents(id, request)));
+    }
+
+    @DeleteMapping("/{id}/students/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TeamDetailResponse>> removeStudent(
+            @PathVariable Long id,
+            @PathVariable Long studentId) {
+        return ResponseEntity.ok(ApiResponse.ok(teamService.removeStudent(id, studentId)));
     }
 }

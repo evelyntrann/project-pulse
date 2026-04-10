@@ -45,6 +45,14 @@
             Invite Students
           </v-btn>
           <v-btn
+            variant="tonal"
+            prepend-icon="mdi-account-multiple-plus"
+            class="mr-2"
+            @click="router.push(`/sections/${section.id}/assign-students`)"
+          >
+            Assign Students
+          </v-btn>
+          <v-btn
             color="primary"
             variant="tonal"
             prepend-icon="mdi-pencil"
@@ -206,6 +214,9 @@ onMounted(async () => {
     snackbar.value = true
   } else if (route.query.saved === 'invited') {
     snackbarMessage.value = 'Invitation emails have been sent successfully.'
+    snackbar.value = true
+  } else if (route.query.saved === 'assigned') {
+    snackbarMessage.value = 'Students have been assigned to teams successfully.'
     snackbar.value = true
   }
 

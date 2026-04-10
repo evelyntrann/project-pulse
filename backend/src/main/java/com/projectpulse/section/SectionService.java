@@ -4,6 +4,7 @@ import com.projectpulse.section.dto.ActiveWeekResponse;
 import com.projectpulse.section.dto.ActiveWeeksRequest;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
+import com.projectpulse.section.dto.SectionStudentResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
 import com.projectpulse.section.dto.SectionUpdateRequest;
 import org.springframework.stereotype.Service;
@@ -130,8 +131,14 @@ public class SectionService {
     }
 
     public SectionDetailResponse getSection(Long id) {
-        SectionEntity section = sectionRepository.findByIdWithTeams(id)
+        SectionEntity section = sectionRepository.findByIdWithTeamsAndStudents(id)
                 .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        // Collect all student IDs already on a team in this section
+        var assignedStudentIds = section.getTeams().stream()
+                .flatMap(t -> t.getStudents().stream())
+                .map(s -> s.getId())
+                .collect(java.util.stream.Collectors.toSet());
 
         List<SectionDetailResponse.TeamDto> teamDtos = section.getTeams().stream()
                 .map(team -> new SectionDetailResponse.TeamDto(
@@ -139,10 +146,19 @@ public class SectionService {
                         team.getName(),
                         team.getDescription(),
                         team.getWebsiteUrl(),
-                        List.of(), // populated when Angel/Micah build student assignment
-                        List.of()  // populated when Angel/Micah build instructor assignment
+                        team.getStudents().stream()
+                                .map(s -> new SectionDetailResponse.UserDto(
+                                        s.getId(), s.getFirstName(), s.getLastName(), s.getEmail()))
+                                .toList(),
+                        List.of() // instructors — populated when UC-19 is built
                 ))
                 .sorted((a, b) -> a.name().compareTo(b.name()))
+                .toList();
+
+        List<SectionDetailResponse.UserDto> unassignedStudents = section.getEnrolledStudents().stream()
+                .filter(s -> !assignedStudentIds.contains(s.getId()))
+                .map(s -> new SectionDetailResponse.UserDto(
+                        s.getId(), s.getFirstName(), s.getLastName(), s.getEmail()))
                 .toList();
 
         return new SectionDetailResponse(
@@ -152,8 +168,18 @@ public class SectionService {
                 section.getEndDate(),
                 section.getRubricId(),
                 teamDtos,
-                List.of(), // unassigned students — populated when Micah builds UC-25
-                List.of()  // unassigned instructors — populated when Angel builds UC-18
+                unassignedStudents,
+                List.of() // unassigned instructors — populated when UC-19 is built
         );
+    }
+
+    public List<SectionStudentResponse> getEnrolledStudents(Long sectionId) {
+        SectionEntity section = sectionRepository.findByIdWithEnrolledStudents(sectionId)
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        return section.getEnrolledStudents().stream()
+                .map(s -> new SectionStudentResponse(
+                        s.getId(), s.getFirstName(), s.getLastName(), s.getEmail()))
+                .toList();
     }
 }
