@@ -36,6 +36,11 @@ const router = createRouter({
           meta: { requiresAuth: true, role: 'ADMIN' },
         },
         {
+          path: 'sections/:id/active-weeks',
+          component: () => import('@/views/sections/SectionActiveWeeksView.vue'),
+          meta: { requiresAuth: true, role: 'ADMIN' },
+        },
+        {
           path: 'sections/:id',
           component: () => import('@/views/sections/SectionDetailView.vue'),
           meta: { requiresAuth: true, role: 'ADMIN' },

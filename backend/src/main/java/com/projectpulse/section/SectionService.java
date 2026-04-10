@@ -1,5 +1,7 @@
 package com.projectpulse.section;
 
+import com.projectpulse.section.dto.ActiveWeekResponse;
+import com.projectpulse.section.dto.ActiveWeeksRequest;
 import com.projectpulse.section.dto.SectionCreateRequest;
 import com.projectpulse.section.dto.SectionDetailResponse;
 import com.projectpulse.section.dto.SectionSummaryResponse;
@@ -14,9 +16,11 @@ import java.util.NoSuchElementException;
 public class SectionService {
 
     private final SectionRepository sectionRepository;
+    private final ActiveWeekRepository activeWeekRepository;
 
-    public SectionService(SectionRepository sectionRepository) {
+    public SectionService(SectionRepository sectionRepository, ActiveWeekRepository activeWeekRepository) {
         this.sectionRepository = sectionRepository;
+        this.activeWeekRepository = activeWeekRepository;
     }
 
     public List<SectionSummaryResponse> findSections(String name) {
@@ -90,6 +94,39 @@ public class SectionService {
                 List.of(),
                 List.of()
         );
+    }
+
+    public List<ActiveWeekResponse> getActiveWeeks(Long sectionId) {
+        sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        return activeWeekRepository.findBySectionIdOrderByWeekStartDate(sectionId).stream()
+                .map(w -> new ActiveWeekResponse(w.getWeekStartDate(), w.isActive()))
+                .toList();
+    }
+
+    @Transactional
+    public List<ActiveWeekResponse> setActiveWeeks(Long sectionId, ActiveWeeksRequest request) {
+        sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        activeWeekRepository.deleteBySectionId(sectionId);
+
+        List<ActiveWeekEntity> entities = request.weeks().stream()
+                .map(w -> {
+                    ActiveWeekEntity entity = new ActiveWeekEntity();
+                    entity.setSectionId(sectionId);
+                    entity.setWeekStartDate(w.weekStartDate());
+                    entity.setActive(w.isActive());
+                    return entity;
+                })
+                .toList();
+
+        activeWeekRepository.saveAll(entities);
+
+        return entities.stream()
+                .map(w -> new ActiveWeekResponse(w.getWeekStartDate(), w.isActive()))
+                .toList();
     }
 
     public SectionDetailResponse getSection(Long id) {
