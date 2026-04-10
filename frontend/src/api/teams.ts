@@ -28,10 +28,20 @@ export interface TeamDetail {
   instructors: TeamMember[]
 }
 
+export interface TeamCreateRequest {
+  name: string
+  description: string
+  websiteUrl: string
+  sectionId: number
+}
+
 export const teamsApi = {
   findTeams: (params: { sectionId?: number; name?: string }) =>
     api.get<{ success: boolean; data: TeamSummary[] }>('/teams', { params }),
 
   getTeam: (id: number) =>
     api.get<{ success: boolean; data: TeamDetail }>(`/teams/${id}`),
+
+  createTeam: (data: TeamCreateRequest) =>
+    api.post<{ success: boolean; data: TeamDetail }>('/teams', data),
 }
