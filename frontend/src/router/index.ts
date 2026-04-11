@@ -93,7 +93,13 @@ router.beforeEach(async (to) => {
 
   // Token exists but user not loaded yet (e.g. page refresh) — fetch it first
   if (auth.isLoggedIn && !auth.user) {
-    await auth.fetchMe()
+    try {
+      await auth.fetchMe()
+    } catch {
+      // Token is expired or invalid — clear it and send to login
+      auth.logout()
+      return '/login'
+    }
   }
 
   if (to.meta.guestOnly && auth.isLoggedIn) {
