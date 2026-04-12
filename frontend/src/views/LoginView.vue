@@ -73,7 +73,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(email.value, password.value)
-    router.push('/dashboard')
+    router.push('/home')
   } catch {
     error.value = 'Invalid email or password'
   } finally {

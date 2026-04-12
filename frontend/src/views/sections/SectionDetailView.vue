@@ -27,11 +27,10 @@
             {{ formatDate(section.startDate) }} — {{ formatDate(section.endDate) }}
           </p>
         </v-col>
-        <v-col cols="auto">
+        <v-col cols="auto" class="d-flex flex-wrap gap-2">
           <v-btn
             variant="tonal"
             prepend-icon="mdi-calendar-clock"
-            class="mr-2"
             @click="router.push(`/sections/${section.id}/active-weeks`)"
           >
             Set Up Weeks
@@ -39,7 +38,6 @@
           <v-btn
             variant="tonal"
             prepend-icon="mdi-email-plus-outline"
-            class="mr-2"
             @click="router.push(`/sections/${section.id}/invite-students`)"
           >
             Invite Students
@@ -47,10 +45,16 @@
           <v-btn
             variant="tonal"
             prepend-icon="mdi-account-multiple-plus"
-            class="mr-2"
             @click="router.push(`/sections/${section.id}/assign-students`)"
           >
             Assign Students
+          </v-btn>
+          <v-btn
+            variant="tonal"
+            prepend-icon="mdi-account-tie"
+            @click="router.push(`/sections/${section.id}/instructors`)"
+          >
+            Manage Instructors
           </v-btn>
           <v-btn
             color="primary"
@@ -59,6 +63,14 @@
             @click="router.push(`/sections/${section.id}/edit`)"
           >
             Edit
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="tonal"
+            prepend-icon="mdi-delete"
+            @click="confirmDelete = true"
+          >
+            Delete
           </v-btn>
         </v-col>
       </v-row>
@@ -183,6 +195,24 @@
       </v-card>
     </template>
 
+    <!-- Delete confirm dialog -->
+    <v-dialog v-model="confirmDelete" max-width="420">
+      <v-card>
+        <v-card-title class="text-h6 pa-4">Delete Section?</v-card-title>
+        <v-card-text class="pb-2">
+          Are you sure you want to delete <strong>{{ section?.name }}</strong>?
+          This action cannot be undone.
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="confirmDelete = false">Cancel</v-btn>
+          <v-btn color="error" variant="tonal" :loading="deleting" @click="handleDelete">
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Success snackbar -->
     <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
       {{ snackbarMessage }}
@@ -203,6 +233,23 @@ const loading = ref(false)
 const error = ref('')
 const snackbar = ref(false)
 const snackbarMessage = ref('')
+const confirmDelete = ref(false)
+const deleting = ref(false)
+
+async function handleDelete() {
+  if (!section.value) return
+  deleting.value = true
+  try {
+    await sectionsApi.deleteSection(section.value.id)
+    router.push('/sections')
+  } catch {
+    confirmDelete.value = false
+    snackbarMessage.value = 'Failed to delete section.'
+    snackbar.value = true
+  } finally {
+    deleting.value = false
+  }
+}
 
 const totalMembers = computed(() =>
   section.value?.teams.reduce((sum, t) => sum + t.members.length, 0) ?? 0
