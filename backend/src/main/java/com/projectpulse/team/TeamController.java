@@ -67,4 +67,11 @@ public class TeamController {
             @PathVariable Long studentId) {
         return ResponseEntity.ok(ApiResponse.ok(teamService.removeStudent(id, studentId)));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteTeam(@PathVariable Long id) {
+        teamService.deleteTeam(id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 }

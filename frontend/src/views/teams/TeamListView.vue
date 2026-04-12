@@ -160,19 +160,25 @@
         <p class="text-body-1 text-grey mt-4">Enter search criteria above or leave blank to view all</p>
       </v-col>
     </v-row>
+
+    <v-snackbar v-model="deletedSnackbar" color="success" timeout="3000" location="bottom">
+      Team deleted successfully.
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { teamsApi, type TeamSummary } from '@/api/teams'
 import { sectionsApi, type SectionSummary } from '@/api/sections'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
+const deletedSnackbar = ref(false)
 const searchName = ref('')
 const searchSectionId = ref<number | null>(null)
 const sections = ref<SectionSummary[]>([])
@@ -185,6 +191,9 @@ onMounted(async () => {
   const res = await sectionsApi.findSections()
   sections.value = res.data.data
   search()
+  if (route.query.deleted === '1') {
+    deletedSnackbar.value = true
+  }
 })
 
 async function search() {

@@ -8,7 +8,6 @@ import com.projectpulse.team.dto.TeamSummaryResponse;
 import com.projectpulse.team.dto.TeamUpdateRequest;
 import com.projectpulse.user.UserEntity;
 import com.projectpulse.user.UserRepository;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -123,6 +122,18 @@ public class TeamService {
     }
 
     @Transactional
+    public void deleteTeam(Long teamId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        List<UserEntity> students = List.copyOf(team.getStudents());
+
+        teamRepository.delete(team);
+
+        students.forEach(student -> sendDeletionNotification(student, team));
+    }
+
+    @Transactional
     public TeamDetailResponse removeStudent(Long teamId, Long studentId) {
         TeamEntity team = teamRepository.findByIdWithStudents(teamId)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));
@@ -169,6 +180,25 @@ public class TeamService {
                 .map(u -> new TeamSummaryResponse.MemberDto(
                         u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
                 .toList();
+    }
+
+    private void sendDeletionNotification(UserEntity student, TeamEntity team) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setTo(student.getEmail());
+            helper.setSubject("Your senior design team has been deleted — Peer Evaluation Tool");
+            helper.setText(
+                    "Hello " + student.getFirstName() + ",\n\n" +
+                    "The senior design team \"" + team.getName() + "\" has been deleted by an administrator.\n\n" +
+                    "Please log in for more details: " + baseUrl + "\n\n" +
+                    "Best regards,\nPeer Evaluation Tool Team",
+                    false
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Failed to send deletion notification to " + student.getEmail() + ": " + e.getMessage());
+        }
     }
 
     private void sendRemovalNotification(UserEntity student, TeamEntity team) {

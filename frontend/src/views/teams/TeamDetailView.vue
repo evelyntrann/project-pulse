@@ -44,9 +44,19 @@
             color="primary"
             variant="tonal"
             prepend-icon="mdi-pencil"
+            class="mr-2"
             @click="router.push(`/teams/${team.id}/edit`)"
           >
             Edit
+          </v-btn>
+          <v-btn
+            v-if="authStore.user?.role === 'ADMIN'"
+            color="error"
+            variant="tonal"
+            prepend-icon="mdi-delete"
+            @click="deleteDialog = true"
+          >
+            Delete
           </v-btn>
         </v-col>
       </v-row>
@@ -113,6 +123,32 @@
       </v-card>
     </template>
 
+    <!-- Confirm delete team dialog -->
+    <v-dialog v-model="deleteDialog" max-width="480" persistent>
+      <v-card>
+        <v-card-title class="text-h6">Delete team?</v-card-title>
+        <v-card-text>
+          <p class="mb-3">
+            Permanently delete <strong>{{ team?.name }}</strong>? This cannot be undone.
+          </p>
+          <v-alert type="warning" variant="tonal" density="compact">
+            <ul class="pl-4">
+              <li>All students and instructors will be removed from this team</li>
+              <li>All associated WARs and peer evaluations will be deleted</li>
+              <li>Students and instructors will be notified by email</li>
+            </ul>
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="tonal" :loading="deleting" @click="confirmDelete">
+            Delete permanently
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Confirm remove dialog -->
     <v-dialog v-model="confirmDialog" max-width="420" persistent>
       <v-card>
@@ -166,6 +202,9 @@ const confirmDialog = ref(false)
 const studentToRemove = ref<TeamMember | null>(null)
 const removingId = ref<number | null>(null)
 
+const deleteDialog = ref(false)
+const deleting = ref(false)
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -180,6 +219,21 @@ onMounted(async () => {
     savedSnackbar.value = true
   }
 })
+
+async function confirmDelete() {
+  if (!team.value) return
+  deleting.value = true
+  try {
+    await teamsApi.deleteTeam(team.value.id)
+    router.push('/teams?deleted=1')
+  } catch {
+    deleteDialog.value = false
+    removeError.value = 'Failed to delete team. Please try again.'
+    removeErrorSnackbar.value = true
+  } finally {
+    deleting.value = false
+  }
+}
 
 function promptRemove(member: TeamMember) {
   studentToRemove.value = member
