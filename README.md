@@ -82,31 +82,30 @@ npm run dev
 ## Test Accounts
 
 > All test accounts use password: **`password123`**
+> Run `backend/src/main/resources/test-data.sql` to seed all accounts (see setup steps above).
 
-### Students
-| Email | Name |
-|-------|------|
-| `alice.johnson@tcu.edu` | Alice Johnson |
-| `bob.smith@tcu.edu` | Bob Smith |
-| `carol.white@tcu.edu` | Carol White |
-| `dan.nguyen@tcu.edu` | Dan Nguyen |
-| `emily.chen@tcu.edu` | Emily Chen |
+### Quick Login Accounts
 
-### Admin (create manually)
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | `admin@tcu.edu` | `password123` |
+| **Instructor** | `dr.wei@tcu.edu` | `password123` |
+| **Student** | `alice.johnson@tcu.edu` | `password123` |
 
-There is no seeded admin account. Insert one directly into the database:
+### All Seeded Accounts
 
-```sql
--- Password: password123
-INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, created_at)
-VALUES (
-  'admin@tcu.edu',
-  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-  'Admin', 'User', 'ADMIN', 1, NOW()
-);
-```
+| Email | Name | Role |
+|-------|------|------|
+| `admin@tcu.edu` | Admin User | ADMIN |
+| `dr.wei@tcu.edu` | Wei Zhang | INSTRUCTOR |
+| `dr.smith@tcu.edu` | John Smith | INSTRUCTOR |
+| `alice.johnson@tcu.edu` | Alice Johnson | STUDENT |
+| `bob.smith@tcu.edu` | Bob Smith | STUDENT |
+| `carol.white@tcu.edu` | Carol White | STUDENT |
+| `dan.nguyen@tcu.edu` | Dan Nguyen | STUDENT |
+| `emily.chen@tcu.edu` | Emily Chen | STUDENT |
 
-### Instructor (create manually)
+### Instructor (reference only)
 
 ```sql
 -- Password: password123
