@@ -127,8 +127,16 @@ public class TeamService {
         TeamEntity team = teamRepository.findByIdWithStudents(teamId)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));
 
-        team.getStudents().removeIf(s -> s.getId().equals(studentId));
+        UserEntity student = team.getStudents().stream()
+                .filter(s -> s.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Student not found in team"));
+
+        team.getStudents().remove(student);
         TeamEntity saved = teamRepository.save(team);
+
+        sendRemovalNotification(student, team);
+
         return toDetailResponse(saved);
     }
 
@@ -163,6 +171,25 @@ public class TeamService {
                 .toList();
     }
 
+    private void sendRemovalNotification(UserEntity student, TeamEntity team) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setTo(student.getEmail());
+            helper.setSubject("You've been removed from a team — Peer Evaluation Tool");
+            helper.setText(
+                    "Hello " + student.getFirstName() + ",\n\n" +
+                    "You have been removed from team \"" + team.getName() + "\".\n\n" +
+                    "Please log in for more details: " + baseUrl + "\n\n" +
+                    "Best regards,\nPeer Evaluation Tool Team",
+                    false
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Failed to send removal notification to " + student.getEmail() + ": " + e.getMessage());
+        }
+    }
+
     private void sendAssignmentNotification(UserEntity student, TeamEntity team) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -177,8 +204,7 @@ public class TeamService {
                     false
             );
             mailSender.send(message);
-        } catch (MessagingException e) {
-            // Log but do not fail the assignment if mail fails
+        } catch (Exception e) {
             System.err.println("Failed to send assignment notification to " + student.getEmail() + ": " + e.getMessage());
         }
     }

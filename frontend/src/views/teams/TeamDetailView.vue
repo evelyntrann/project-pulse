@@ -80,7 +80,18 @@
             :title="`${m.firstName} ${m.lastName}`"
             :subtitle="m.email"
             prepend-icon="mdi-account"
-          />
+          >
+            <template v-if="authStore.user?.role === 'ADMIN'" #append>
+              <v-btn
+                icon="mdi-account-remove"
+                variant="text"
+                color="error"
+                size="small"
+                :loading="removingId === m.id"
+                @click="promptRemove(m)"
+              />
+            </template>
+          </v-list-item>
         </v-list>
       </v-card>
 
@@ -102,9 +113,33 @@
       </v-card>
     </template>
 
-    <!-- Save success notification -->
+    <!-- Confirm remove dialog -->
+    <v-dialog v-model="confirmDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title class="text-h6">Remove student?</v-card-title>
+        <v-card-text v-if="studentToRemove">
+          Remove <strong>{{ studentToRemove.firstName }} {{ studentToRemove.lastName }}</strong>
+          from <strong>{{ team?.name }}</strong>? They will be notified by email.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelRemove">Cancel</v-btn>
+          <v-btn color="error" variant="tonal" :loading="removingId !== null" @click="confirmRemove">
+            Remove
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbars -->
     <v-snackbar v-model="savedSnackbar" color="success" timeout="3000" location="bottom">
       Team updated successfully.
+    </v-snackbar>
+    <v-snackbar v-model="removedSnackbar" color="success" timeout="3000" location="bottom">
+      Student removed successfully.
+    </v-snackbar>
+    <v-snackbar v-model="removeErrorSnackbar" color="error" timeout="4000" location="bottom">
+      {{ removeError }}
     </v-snackbar>
   </v-container>
 </template>
@@ -112,7 +147,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { teamsApi, type TeamDetail } from '@/api/teams'
+import { teamsApi, type TeamDetail, type TeamMember } from '@/api/teams'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -123,6 +158,13 @@ const team = ref<TeamDetail | null>(null)
 const loading = ref(false)
 const error = ref('')
 const savedSnackbar = ref(false)
+const removedSnackbar = ref(false)
+const removeErrorSnackbar = ref(false)
+const removeError = ref('')
+
+const confirmDialog = ref(false)
+const studentToRemove = ref<TeamMember | null>(null)
+const removingId = ref<number | null>(null)
 
 onMounted(async () => {
   loading.value = true
@@ -138,4 +180,31 @@ onMounted(async () => {
     savedSnackbar.value = true
   }
 })
+
+function promptRemove(member: TeamMember) {
+  studentToRemove.value = member
+  confirmDialog.value = true
+}
+
+function cancelRemove() {
+  confirmDialog.value = false
+  studentToRemove.value = null
+}
+
+async function confirmRemove() {
+  if (!team.value || !studentToRemove.value) return
+  removingId.value = studentToRemove.value.id
+  try {
+    const res = await teamsApi.removeStudent(team.value.id, studentToRemove.value.id)
+    team.value = res.data.data
+    confirmDialog.value = false
+    studentToRemove.value = null
+    removedSnackbar.value = true
+  } catch {
+    removeError.value = 'Failed to remove student. Please try again.'
+    removeErrorSnackbar.value = true
+  } finally {
+    removingId.value = null
+  }
+}
 </script>
