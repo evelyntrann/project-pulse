@@ -2,7 +2,9 @@ package com.projectpulse.section.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record SectionCreateRequest(
 
@@ -15,6 +17,15 @@ public record SectionCreateRequest(
         @NotNull(message = "End date is required")
         LocalDate endDate,
 
-        @NotNull(message = "Rubric ID is required")
-        Long rubricId
+        Long rubricId,
+
+        Boolean isActive,
+
+        DayOfWeek warWeeklyDueDay,
+
+        LocalTime warDueTime,
+
+        DayOfWeek peerEvaluationWeeklyDueDay,
+
+        LocalTime peerEvaluationDueTime
 ) {}

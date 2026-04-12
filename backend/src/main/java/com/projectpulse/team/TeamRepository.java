@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface TeamRepository extends JpaRepository<TeamEntity, Long> {
 
-    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section s LEFT JOIN FETCH t.students WHERE " +
+    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section s LEFT JOIN FETCH t.students LEFT JOIN FETCH t.instructor WHERE " +
            "(:sectionId IS NULL OR s.id = :sectionId) AND " +
            "(:name IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
            "ORDER BY s.name DESC, t.name ASC")
@@ -18,8 +18,11 @@ public interface TeamRepository extends JpaRepository<TeamEntity, Long> {
             @Param("name") String name
     );
 
-    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section LEFT JOIN FETCH t.students WHERE t.id = :id")
+    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section LEFT JOIN FETCH t.students LEFT JOIN FETCH t.instructor WHERE t.id = :id")
     Optional<TeamEntity> findByIdWithStudents(@Param("id") Long id);
+
+    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section s LEFT JOIN FETCH t.students WHERE s.id = :sectionId AND :student MEMBER OF t.students")
+    java.util.Optional<TeamEntity> findBySectionAndStudent(@Param("sectionId") Long sectionId, @Param("student") com.projectpulse.user.UserEntity student);
 
     boolean existsByName(String name);
 

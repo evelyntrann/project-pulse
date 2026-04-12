@@ -36,6 +36,10 @@ public class TeamEntity {
     )
     private List<UserEntity> students = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_id")
+    private UserEntity instructor;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -56,6 +60,9 @@ public class TeamEntity {
 
     public List<UserEntity> getStudents() { return students; }
     public void setStudents(List<UserEntity> students) { this.students = students; }
+
+    public UserEntity getInstructor() { return instructor; }
+    public void setInstructor(UserEntity instructor) { this.instructor = instructor; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

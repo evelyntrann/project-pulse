@@ -5,6 +5,8 @@ import com.projectpulse.team.dto.AssignStudentsRequest;
 import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
+import com.projectpulse.team.dto.TeamTransferRequest;
+import com.projectpulse.team.dto.TeamTransferResponse;
 import com.projectpulse.team.dto.TeamUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -73,5 +75,22 @@ public class TeamController {
     public ResponseEntity<ApiResponse<Void>> deleteTeam(@PathVariable Long id) {
         teamService.deleteTeam(id);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PutMapping("/{id}/instructors/{instructorId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> assignInstructorToTeam(
+            @PathVariable Long id,
+            @PathVariable Long instructorId) {
+        teamService.assignInstructorToTeam(id, instructorId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PatchMapping("/{id}/section")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TeamTransferResponse>> transferTeam(
+            @PathVariable Long id,
+            @Valid @RequestBody TeamTransferRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(teamService.transferTeamToAnotherSection(id, request.sectionId())));
     }
 }

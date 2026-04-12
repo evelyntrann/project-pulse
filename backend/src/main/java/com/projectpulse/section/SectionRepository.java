@@ -21,5 +21,8 @@ public interface SectionRepository extends JpaRepository<SectionEntity, Long> {
     @Query("SELECT s FROM SectionEntity s LEFT JOIN FETCH s.enrolledStudents WHERE s.id = :id")
     Optional<SectionEntity> findByIdWithEnrolledStudents(@Param("id") Long id);
 
+    @Query("SELECT s FROM SectionEntity s LEFT JOIN FETCH s.enrolledInstructors WHERE s.id = :id")
+    Optional<SectionEntity> findByIdWithInstructors(@Param("id") Long id);
+
     boolean existsByName(String name);
 }

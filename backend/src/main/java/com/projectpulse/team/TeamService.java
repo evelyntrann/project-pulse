@@ -1,10 +1,12 @@
 package com.projectpulse.team;
 
+import com.projectpulse.section.SectionEntity;
 import com.projectpulse.section.SectionRepository;
 import com.projectpulse.team.dto.AssignStudentsRequest;
 import com.projectpulse.team.dto.TeamCreateRequest;
 import com.projectpulse.team.dto.TeamDetailResponse;
 import com.projectpulse.team.dto.TeamSummaryResponse;
+import com.projectpulse.team.dto.TeamTransferResponse;
 import com.projectpulse.team.dto.TeamUpdateRequest;
 import com.projectpulse.user.UserEntity;
 import com.projectpulse.user.UserRepository;
@@ -93,7 +95,13 @@ public class TeamService {
                         team.getSection().getId(),
                         team.getSection().getName(),
                         toSummaryMemberDtos(team.getStudents()),
-                        List.of() // instructors — populated when UC-19 is built
+                        team.getInstructor() != null
+                                ? List.of(new TeamSummaryResponse.MemberDto(
+                                        team.getInstructor().getId(),
+                                        team.getInstructor().getFirstName(),
+                                        team.getInstructor().getLastName(),
+                                        team.getInstructor().getEmail()))
+                                : List.of()
                 ))
                 .toList();
     }
@@ -108,17 +116,63 @@ public class TeamService {
             throw new NoSuchElementException("One or more students not found");
         }
 
-        team.getStudents().addAll(
-                students.stream()
-                        .filter(s -> team.getStudents().stream().noneMatch(e -> e.getId().equals(s.getId())))
-                        .toList()
+        for (UserEntity student : students) {
+            // Skip if already on this team
+            if (team.getStudents().stream().anyMatch(s -> s.getId().equals(student.getId()))) continue;
+            // Remove from any other team in the same section first
+            teamRepository.findBySectionAndStudent(team.getSection().getId(), student)
+                    .ifPresent(oldTeam -> oldTeam.getStudents().remove(student));
+            team.getStudents().add(student);
+            sendAssignmentNotification(student, team);
+        }
+
+        return toDetailResponse(teamRepository.save(team));
+    }
+
+    @Transactional
+    public void assignInstructorToTeam(Long teamId, Long instructorId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+        UserEntity instructor = userRepository.findById(instructorId)
+                .orElseThrow(() -> new NoSuchElementException("Instructor not found"));
+
+        if (!"INSTRUCTOR".equals(instructor.getRole()) && !"ADMIN".equals(instructor.getRole())) {
+            throw new IllegalArgumentException("User is not an instructor");
+        }
+
+        // Replace existing instructor if different
+        if (!instructor.equals(team.getInstructor())) {
+            team.setInstructor(instructor);
+            teamRepository.save(team);
+        }
+    }
+
+    @Transactional
+    public TeamTransferResponse transferTeamToAnotherSection(Long teamId, Long newSectionId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        SectionEntity oldSection = team.getSection();
+        SectionEntity newSection = sectionRepository.findById(newSectionId)
+                .orElseThrow(() -> new NoSuchElementException("Section not found"));
+
+        if (oldSection.getId().equals(newSection.getId())) {
+            throw new IllegalArgumentException("Team is already in the specified section");
+        }
+
+        int studentCount = team.getStudents().size();
+        team.setSection(newSection);
+        teamRepository.save(team);
+
+        return new TeamTransferResponse(
+                team.getId(),
+                team.getName(),
+                oldSection.getId(),
+                oldSection.getName(),
+                newSection.getId(),
+                newSection.getName(),
+                studentCount
         );
-
-        TeamEntity saved = teamRepository.save(team);
-
-        students.forEach(student -> sendAssignmentNotification(student, team));
-
-        return toDetailResponse(saved);
     }
 
     @Transactional
@@ -154,6 +208,14 @@ public class TeamService {
     // ---- helpers ----
 
     private TeamDetailResponse toDetailResponse(TeamEntity team) {
+        List<TeamDetailResponse.MemberDto> instructors = team.getInstructor() != null
+                ? List.of(new TeamDetailResponse.MemberDto(
+                        team.getInstructor().getId(),
+                        team.getInstructor().getFirstName(),
+                        team.getInstructor().getLastName(),
+                        team.getInstructor().getEmail()))
+                : List.of();
+
         return new TeamDetailResponse(
                 team.getId(),
                 team.getName(),
@@ -164,7 +226,7 @@ public class TeamService {
                         team.getSection().getName()
                 ),
                 toMemberDtos(team.getStudents()),
-                List.of() // instructors — populated when UC-19 is built
+                instructors
         );
     }
 

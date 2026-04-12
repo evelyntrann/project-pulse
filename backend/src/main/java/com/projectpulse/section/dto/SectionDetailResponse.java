@@ -1,6 +1,8 @@
 package com.projectpulse.section.dto;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public record SectionDetailResponse(
@@ -9,6 +11,11 @@ public record SectionDetailResponse(
         LocalDate startDate,
         LocalDate endDate,
         Long rubricId,
+        boolean isActive,
+        DayOfWeek warWeeklyDueDay,
+        LocalTime warDueTime,
+        DayOfWeek peerEvaluationWeeklyDueDay,
+        LocalTime peerEvaluationDueTime,
         List<TeamDto> teams,
         List<UserDto> unassignedStudents,
         List<UserDto> unassignedInstructors
