@@ -59,4 +59,7 @@ export const teamsApi = {
 
   removeStudent: (teamId: number, studentId: number) =>
     api.delete<{ success: boolean; data: TeamDetail }>(`/teams/${teamId}/students/${studentId}`),
+
+  deleteTeam: (id: number) =>
+    api.delete<{ success: boolean; data: null }>(`/teams/${id}`),
 }
