@@ -134,8 +134,16 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['ADMIN'] },
         },
 
+        // ── Students (ADMIN + INSTRUCTOR) ────────────────────────────────
+        {
+          path: 'students',
+          name: 'students',
+          component: () => import('@/views/students/StudentListView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN', 'INSTRUCTOR'] },
+        },
+
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Angel  → UC-15–24: /students, /instructors
+        // Angel  → UC-15–24: /instructors
         // Micah  → UC-25–34: /activities, /evaluations, /reports
       ],
     },
