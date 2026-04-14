@@ -1,5 +1,6 @@
 package com.projectpulse.common;
 
+import com.projectpulse.rubric.DuplicateRubricException;
 import com.projectpulse.section.DuplicateSectionException;
 import com.projectpulse.team.DuplicateTeamException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateTeamException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateTeam(DuplicateTeamException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateRubricException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateRubric(DuplicateRubricException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
     }
 

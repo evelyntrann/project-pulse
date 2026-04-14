@@ -114,8 +114,28 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['ADMIN'] },
         },
 
+        // ── Rubrics (ADMIN) ───────────────────────────────────────────────
+        {
+          path: 'rubrics',
+          name: 'rubrics',
+          component: () => import('@/views/rubrics/RubricListView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
+        {
+          path: 'rubrics/new',
+          name: 'rubrics-new',
+          component: () => import('@/views/rubrics/RubricCreateView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
+        {
+          path: 'rubrics/:id',
+          name: 'rubrics-detail',
+          component: () => import('@/views/rubrics/RubricDetailView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
+
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Angel  → UC-15–24: /students, /rubrics, /criteria
+        // Angel  → UC-15–24: /students, /instructors
         // Micah  → UC-25–34: /activities, /evaluations, /reports
       ],
     },
