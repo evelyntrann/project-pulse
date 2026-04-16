@@ -12,6 +12,24 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByEmail(String email);
 
     @Query(nativeQuery = true, value = """
+            SELECT
+                u.id          AS id,
+                u.first_name  AS firstName,
+                u.last_name   AS lastName,
+                u.email       AS email,
+                s.name        AS sectionName,
+                t.name        AS teamName
+            FROM users u
+            LEFT JOIN section_students ss ON u.id = ss.student_id
+            LEFT JOIN sections s          ON ss.section_id = s.id
+            LEFT JOIN team_students ts    ON u.id = ts.student_id
+            LEFT JOIN teams t             ON ts.team_id = t.id
+            WHERE u.id = :id AND u.role = 'STUDENT'
+            LIMIT 1
+            """)
+    Optional<StudentSearchProjection> findStudentById(@Param("id") Long id);
+
+    @Query(nativeQuery = true, value = """
             SELECT DISTINCT
                 u.id          AS id,
                 u.first_name  AS firstName,

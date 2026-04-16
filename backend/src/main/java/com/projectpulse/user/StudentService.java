@@ -1,9 +1,11 @@
 package com.projectpulse.user;
 
+import com.projectpulse.user.dto.StudentDetailResponse;
 import com.projectpulse.user.dto.StudentSearchResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class StudentService {
@@ -29,6 +31,14 @@ public class StudentService {
                         p.getId(), p.getFirstName(), p.getLastName(),
                         p.getEmail(), p.getSectionName(), p.getTeamName()))
                 .toList();
+    }
+
+    public StudentDetailResponse getStudent(Long id) {
+        StudentSearchProjection p = userRepository.findStudentById(id)
+                .orElseThrow(() -> new NoSuchElementException("Student not found"));
+        return new StudentDetailResponse(
+                p.getId(), p.getFirstName(), p.getLastName(),
+                p.getEmail(), p.getSectionName(), p.getTeamName());
     }
 
     private String blank(String value) {

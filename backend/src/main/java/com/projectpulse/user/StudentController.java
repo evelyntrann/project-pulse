@@ -1,6 +1,7 @@
 package com.projectpulse.user;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.user.dto.StudentDetailResponse;
 import com.projectpulse.user.dto.StudentSearchResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +17,12 @@ public class StudentController {
 
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<StudentDetailResponse>> getStudent(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(studentService.getStudent(id)));
     }
 
     @GetMapping
