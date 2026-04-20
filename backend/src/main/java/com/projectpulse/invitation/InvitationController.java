@@ -1,6 +1,8 @@
 package com.projectpulse.invitation;
 
 import com.projectpulse.common.ApiResponse;
+import com.projectpulse.invitation.dto.InstructorInviteRequest;
+import com.projectpulse.invitation.dto.InstructorInviteResponse;
 import com.projectpulse.invitation.dto.StudentInviteRequest;
 import com.projectpulse.invitation.dto.StudentInviteResponse;
 import jakarta.validation.Valid;
@@ -17,6 +19,15 @@ public class InvitationController {
 
     public InvitationController(InvitationService invitationService) {
         this.invitationService = invitationService;
+    }
+
+    @PostMapping("/instructors")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<InstructorInviteResponse>> inviteInstructors(
+            @Valid @RequestBody InstructorInviteRequest request,
+            Authentication authentication) {
+        Long adminId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.ok(invitationService.inviteInstructors(request, adminId)));
     }
 
     @PostMapping("/students")

@@ -113,8 +113,9 @@ const navItems = computed((): NavItem[] => {
   if (role === 'ADMIN') {
     items.push({ title: 'Sections', icon: 'mdi-school', to: '/sections' })
     items.push({ title: 'Teams',    icon: 'mdi-account-group', to: '/teams' })
-    items.push({ title: 'Rubrics',  icon: 'mdi-clipboard-list-outline', to: '/rubrics' })
-    items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
+    items.push({ title: 'Rubrics',     icon: 'mdi-clipboard-list-outline', to: '/rubrics' })
+    items.push({ title: 'Students',    icon: 'mdi-account-multiple',       to: '/students' })
+    items.push({ title: 'Instructors', icon: 'mdi-account-tie',            to: '/instructors' })
   }
 
   if (role === 'INSTRUCTOR') {

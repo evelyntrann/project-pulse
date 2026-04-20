@@ -1,5 +1,7 @@
 package com.projectpulse.invitation;
 
+import com.projectpulse.invitation.dto.InstructorInviteRequest;
+import com.projectpulse.invitation.dto.InstructorInviteResponse;
 import com.projectpulse.invitation.dto.StudentInviteRequest;
 import com.projectpulse.invitation.dto.StudentInviteResponse;
 import com.projectpulse.section.SectionRepository;
@@ -72,6 +74,37 @@ public class InvitationService {
         }
 
         return new StudentInviteResponse(sent.size(), sent);
+    }
+
+    @Transactional
+    public InstructorInviteResponse inviteInstructors(InstructorInviteRequest request, Long adminId) {
+        var admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new NoSuchElementException("Admin not found"));
+
+        String adminName = admin.getFirstName() + " " + admin.getLastName();
+        String adminEmail = admin.getEmail();
+
+        List<String> sent = new ArrayList<>();
+
+        for (String email : request.emails()) {
+            String token = UUID.randomUUID().toString();
+
+            InvitationEntity invite = new InvitationEntity();
+            invite.setEmail(email);
+            invite.setRole("INSTRUCTOR");
+            invite.setToken(token);
+            invite.setInvitedBy(admin);
+            invite.setExpiresAt(LocalDateTime.now().plusDays(7));
+            invitationRepository.save(invite);
+
+            String registrationLink = baseUrl + "/register?token=" + token;
+            String body = buildEmailBody(adminName, adminEmail, registrationLink, request.customMessage());
+
+            sendEmail(email, "Welcome to The Peer Evaluation Tool - Complete Your Registration", body);
+            sent.add(email);
+        }
+
+        return new InstructorInviteResponse(sent.size(), sent);
     }
 
     private String buildEmailBody(String adminName, String adminEmail,
