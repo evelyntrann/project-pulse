@@ -1,6 +1,7 @@
 package com.projectpulse.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -61,4 +62,12 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             @Param("sectionId")   Long sectionId,
             @Param("teamId")      Long teamId
     );
+
+    @Modifying
+    @Query(nativeQuery = true, value = "DELETE FROM section_students WHERE student_id = :id")
+    void deleteSectionMemberships(@Param("id") Long id);
+
+    @Modifying
+    @Query(nativeQuery = true, value = "DELETE FROM team_students WHERE student_id = :id")
+    void deleteTeamMemberships(@Param("id") Long id);
 }
