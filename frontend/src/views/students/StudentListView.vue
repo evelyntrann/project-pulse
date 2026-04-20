@@ -57,6 +57,28 @@
               @keyup.enter="search"
             />
           </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="filters.sectionId"
+              label="Section ID"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="filters.teamId"
+              label="Team ID"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
         </v-row>
 
         <v-row class="mt-1">
@@ -155,6 +177,8 @@ const filters = reactive({
   email: '',
   sectionName: '',
   teamName: '',
+  sectionId: null as number | null,
+  teamId: null as number | null,
 })
 
 const results = ref<StudentSearchResult[]>([])
@@ -172,9 +196,15 @@ async function search() {
       email:       filters.email       || undefined,
       sectionName: filters.sectionName || undefined,
       teamName:    filters.teamName    || undefined,
+      sectionId:   filters.sectionId   ?? undefined,
+      teamId:      filters.teamId      ?? undefined,
     }
     const res = await studentsApi.searchStudents(params)
-    results.value = res.data.data
+    results.value = [...res.data.data].sort((a, b) => {
+      const sectionCmp = (b.sectionName ?? '').localeCompare(a.sectionName ?? '')
+      if (sectionCmp !== 0) return sectionCmp
+      return (a.lastName ?? '').localeCompare(b.lastName ?? '')
+    })
     searched.value = true
   } catch {
     error.value = 'Failed to search students. Please try again.'
@@ -189,6 +219,8 @@ function clearAndSearch() {
   filters.email = ''
   filters.sectionName = ''
   filters.teamName = ''
+  filters.sectionId = null
+  filters.teamId = null
   search()
 }
 </script>
