@@ -168,8 +168,6 @@ public class TeamService {
         TeamEntity team = teamRepository.findByIdWithStudents(teamId)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));
 
-        List<UserEntity> students = List.copyOf(team.getStudents());
-
         teamRepository.delete(team);
 
     }
@@ -215,14 +213,14 @@ public class TeamService {
         );
     }
 
-    private List<TeamDetailResponse.MemberDto> toMemberDtos(List<UserEntity> users) {
+    private List<TeamDetailResponse.MemberDto> toMemberDtos(java.util.Collection<UserEntity> users) {
         return users.stream()
                 .map(u -> new TeamDetailResponse.MemberDto(
                         u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
                 .toList();
     }
 
-    private List<TeamSummaryResponse.MemberDto> toSummaryMemberDtos(List<UserEntity> users) {
+    private List<TeamSummaryResponse.MemberDto> toSummaryMemberDtos(java.util.Collection<UserEntity> users) {
         return users.stream()
                 .map(u -> new TeamSummaryResponse.MemberDto(
                         u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
