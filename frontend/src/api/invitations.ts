@@ -1,17 +1,29 @@
 import api from './axios'
 
-export interface StudentInviteRequest {
-  sectionId: number
-  emails: string[]
-  customMessage?: string
+export interface InviteLinkResponse {
+  shareableLink: string
+  expiresAt: string
 }
 
-export interface StudentInviteResponse {
-  sentCount: number
-  emails: string[]
+export interface InvitationInfoResponse {
+  sectionName: string
+  expiresAt: string
+}
+
+export interface StudentRegisterRequest {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
 }
 
 export const invitationsApi = {
-  inviteStudents: (data: StudentInviteRequest) =>
-    api.post<{ success: boolean; data: StudentInviteResponse }>('/invitations/students', data),
+  generateInviteLink: (sectionId: number) =>
+    api.post<{ success: boolean; data: InviteLinkResponse }>('/invitations/students/link', { sectionId }),
+
+  getInvitationInfo: (token: string) =>
+    api.get<{ success: boolean; data: InvitationInfoResponse }>(`/invitations/${token}`),
+
+  registerViaToken: (token: string, data: StudentRegisterRequest) =>
+    api.post<{ success: boolean; data: null }>(`/invitations/${token}/register`, data),
 }

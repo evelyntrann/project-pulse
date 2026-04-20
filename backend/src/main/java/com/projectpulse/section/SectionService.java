@@ -11,13 +11,9 @@ import com.projectpulse.section.dto.SectionSummaryResponse;
 import com.projectpulse.section.dto.SectionUpdateRequest;
 import com.projectpulse.user.UserEntity;
 import com.projectpulse.user.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.mail.internet.MimeMessage;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,21 +31,15 @@ public class SectionService {
     private final ActiveWeekRepository activeWeekRepository;
     private final UserRepository userRepository;
     private final InvitationRepository invitationRepository;
-    private final JavaMailSender mailSender;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
 
     public SectionService(SectionRepository sectionRepository,
                           ActiveWeekRepository activeWeekRepository,
                           UserRepository userRepository,
-                          InvitationRepository invitationRepository,
-                          JavaMailSender mailSender) {
+                          InvitationRepository invitationRepository) {
         this.sectionRepository = sectionRepository;
         this.activeWeekRepository = activeWeekRepository;
         this.userRepository = userRepository;
         this.invitationRepository = invitationRepository;
-        this.mailSender = mailSender;
     }
 
     public List<SectionSummaryResponse> findSections(String name) {
@@ -292,7 +282,7 @@ public class SectionService {
                     addedEmails.add(email);
                 }
             } else {
-                sendInstructorInvitation(email, sectionId);
+                createInstructorInvitation(email, sectionId);
                 invitedEmails.add(email);
             }
         }
@@ -308,34 +298,16 @@ public class SectionService {
 
     // ---- helpers ----
 
-    private void sendInstructorInvitation(String email, Long sectionId) {
+    private void createInstructorInvitation(String email, Long sectionId) {
         SectionEntity section = sectionRepository.findById(sectionId).orElse(null);
-        String token = UUID.randomUUID().toString();
 
         InvitationEntity invite = new InvitationEntity();
         invite.setEmail(email);
         invite.setRole("INSTRUCTOR");
         invite.setSection(section);
-        invite.setToken(token);
+        invite.setToken(UUID.randomUUID().toString());
         invite.setExpiresAt(LocalDateTime.now().plusDays(7));
         invitationRepository.save(invite);
-
-        String registrationLink = baseUrl + "/register?token=" + token;
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setTo(email);
-            helper.setSubject("You've been invited to join as an Instructor — Peer Evaluation Tool");
-            helper.setText(
-                    "Hello,\n\nYou have been invited to join the Peer Evaluation Tool as an instructor.\n\n" +
-                    "To complete your registration, please use the link below:\n\n" +
-                    registrationLink + "\n\nBest regards,\nPeer Evaluation Tool Team",
-                    false
-            );
-            mailSender.send(message);
-        } catch (Exception e) {
-            System.err.println("Failed to send instructor invitation to " + email + ": " + e.getMessage());
-        }
     }
 
     private SectionDetailResponse toDetailResponse(SectionEntity section,
