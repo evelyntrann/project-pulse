@@ -21,9 +21,21 @@ export interface StudentSearchResult {
   teamName: string | null
 }
 
+export interface StudentDetail {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  sectionName: string | null
+  teamName: string | null
+}
+
 // ── API calls ────────────────────────────────────────────────────────────────
 
 export const studentsApi = {
   searchStudents: (params: StudentSearchParams) =>
     api.get<{ success: boolean; data: StudentSearchResult[] }>('/students', { params }),
+
+  getStudent: (id: number) =>
+    api.get<{ success: boolean; data: StudentDetail }>(`/students/${id}`),
 }

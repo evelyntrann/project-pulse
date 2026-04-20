@@ -141,7 +141,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="student in results" :key="student.id">
+            <tr
+              v-for="student in results"
+              :key="student.id"
+              class="cursor-pointer"
+              @click="router.push(`/students/${student.id}`)"
+            >
               <td class="text-medium-emphasis">{{ student.sectionName ?? '—' }}</td>
               <td>{{ student.firstName }}</td>
               <td>{{ student.lastName }}</td>
