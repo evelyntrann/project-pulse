@@ -157,11 +157,16 @@
       </v-card>
 
     </template>
+
+    <!-- Success snackbar (e.g. after delete) -->
+    <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { studentsApi, type StudentSearchResult } from '@/api/students'
@@ -185,6 +190,17 @@ const results = ref<StudentSearchResult[]>([])
 const loading = ref(false)
 const error = ref('')
 const searched = ref(false)
+
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+
+onMounted(() => {
+  const msg = (history.state as any)?.successMessage
+  if (msg) {
+    snackbarMessage.value = msg
+    snackbar.value = true
+  }
+})
 
 async function search() {
   loading.value = true
