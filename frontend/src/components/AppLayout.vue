@@ -114,13 +114,12 @@ const navItems = computed((): NavItem[] => {
     items.push({ title: 'Sections', icon: 'mdi-school', to: '/sections' })
     items.push({ title: 'Teams',    icon: 'mdi-account-group', to: '/teams' })
     items.push({ title: 'Rubrics',  icon: 'mdi-clipboard-list-outline', to: '/rubrics' })
-    // Angel → UC-15–24: uncomment when implemented
-    // items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
+    items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
   }
 
   if (role === 'INSTRUCTOR') {
-    items.push({ title: 'Teams', icon: 'mdi-account-group', to: '/teams' })
-    // Angel → UC-19–22: add Students when implemented
+    items.push({ title: 'Teams',    icon: 'mdi-account-group',    to: '/teams' })
+    items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
     // Micah → UC-25–28: add Activities/Evaluations when implemented
   }
 
