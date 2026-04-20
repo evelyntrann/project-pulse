@@ -23,6 +23,16 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
 
+    // UC-25 / UC-30: account registration via invitation link (?token=...)
+    // Public + guestOnly — no account exists yet, and logged-in users
+    // shouldn't land here if they click an old invite link.
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+      meta: { guestOnly: true },
+    },
+
     // ── Authenticated shell ─────────────────────────────────────────────────
     {
       path: '/',

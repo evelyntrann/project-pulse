@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/students/register").permitAll()
                 .requestMatchers("/api/v1/instructors/register").permitAll()
+                // UC-25/UC-30: token validation on the registration page load (no account yet)
+                .requestMatchers("/api/v1/invitations/validate").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
