@@ -38,4 +38,7 @@ export const studentsApi = {
 
   getStudent: (id: number) =>
     api.get<{ success: boolean; data: StudentDetail }>(`/students/${id}`),
+
+  deleteStudent: (id: number) =>
+    api.delete<{ success: boolean; data: null }>(`/students/${id}`),
 }

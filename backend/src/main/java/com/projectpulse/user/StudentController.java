@@ -25,6 +25,13 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.ok(studentService.getStudent(id)));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteStudent(@PathVariable Long id) {
+        studentService.deleteStudent(id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ApiResponse<List<StudentSearchResponse>>> searchStudents(

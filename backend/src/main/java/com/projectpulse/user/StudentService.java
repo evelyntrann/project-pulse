@@ -3,6 +3,7 @@ package com.projectpulse.user;
 import com.projectpulse.user.dto.StudentDetailResponse;
 import com.projectpulse.user.dto.StudentSearchResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -39,6 +40,15 @@ public class StudentService {
         return new StudentDetailResponse(
                 p.getId(), p.getFirstName(), p.getLastName(),
                 p.getEmail(), p.getSectionName(), p.getTeamName());
+    }
+
+    @Transactional
+    public void deleteStudent(Long id) {
+        userRepository.findStudentById(id)
+                .orElseThrow(() -> new NoSuchElementException("Student not found"));
+        userRepository.deleteSectionMemberships(id);
+        userRepository.deleteTeamMemberships(id);
+        userRepository.deleteById(id);
     }
 
     private String blank(String value) {
