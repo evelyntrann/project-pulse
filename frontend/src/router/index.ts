@@ -173,6 +173,12 @@ const router = createRouter({
           component: () => import('@/views/instructors/InstructorAssignView.vue'),
           meta: { requiresAuth: true, roles: ['ADMIN'] },
         },
+        {
+          path: 'instructors/:id',
+          name: 'instructors-detail',
+          component: () => import('@/views/instructors/InstructorDetailView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
 
         // ── Placeholder slots for teammates ──────────────────────────────
         // Micah  → UC-25–34: /activities, /evaluations, /reports

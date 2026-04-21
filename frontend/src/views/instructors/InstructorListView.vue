@@ -1,7 +1,7 @@
 <template>
-  <v-container max-width="800">
+  <v-container max-width="900">
     <div class="d-flex align-center mb-6">
-      <h1 class="text-h5 font-weight-bold">Instructors</h1>
+      <h1 class="text-h5 font-weight-bold">Find Instructors</h1>
       <v-spacer />
       <v-btn variant="outlined" class="mr-2" prepend-icon="mdi-account-group" @click="router.push('/instructors/assign')">
         Assign to Teams
@@ -11,15 +11,125 @@
       </v-btn>
     </div>
 
-    <v-alert v-if="generateError" type="error" variant="tonal" density="compact" class="mb-4">
-      {{ generateError }}
-    </v-alert>
+    <!-- Search Form -->
+    <v-card variant="outlined" class="mb-4">
+      <v-card-title class="text-body-1 font-weight-bold pa-4 pb-0">Search Criteria</v-card-title>
+      <v-card-text class="pa-4">
+        <v-row dense>
+          <v-col cols="12" sm="4">
+            <v-text-field
+              v-model="filters.firstName"
+              label="First Name"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
+          <v-col cols="12" sm="4">
+            <v-text-field
+              v-model="filters.lastName"
+              label="Last Name"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
+          <v-col cols="12" sm="4">
+            <v-text-field
+              v-model="filters.teamName"
+              label="Team Name"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
+          <v-col cols="12" sm="4">
+            <v-select
+              v-model="filters.status"
+              label="Status"
+              :items="statusOptions"
+              item-title="label"
+              item-value="value"
+              variant="outlined"
+              density="comfortable"
+              clearable
+            />
+          </v-col>
+        </v-row>
 
-    <v-card variant="outlined">
-      <v-card-text class="pa-8 text-center text-medium-emphasis">
-        Instructor search will be available here once implemented (UC-21).
+        <v-row class="mt-1">
+          <v-col cols="auto">
+            <v-btn color="primary" prepend-icon="mdi-magnify" :loading="loading" @click="search">
+              Search
+            </v-btn>
+          </v-col>
+          <v-col cols="auto">
+            <v-btn variant="outlined" @click="clearAndSearch">Clear</v-btn>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
+
+    <!-- Error -->
+    <v-alert v-if="error" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ error }}
+    </v-alert>
+
+    <!-- Results -->
+    <template v-if="searched">
+
+      <!-- Empty state (extension 4a) -->
+      <v-alert v-if="results.length === 0" type="info" variant="tonal" class="mb-4">
+        <div class="font-weight-medium mb-1">No matching instructors found.</div>
+        <div class="text-body-2">
+          Try adjusting your search criteria, or
+          <v-btn variant="text" size="small" density="compact" class="px-1" :loading="generating" @click="generateLink">
+            generate an invite link
+          </v-btn>
+          to invite a new instructor.
+        </div>
+      </v-alert>
+
+      <!-- Results table -->
+      <v-card v-else variant="outlined">
+        <v-card-title class="text-body-2 text-medium-emphasis pa-4 pb-0">
+          {{ results.length }} instructor{{ results.length !== 1 ? 's' : '' }} found
+        </v-card-title>
+        <v-table>
+          <thead>
+            <tr>
+              <th class="text-left">First Name</th>
+              <th class="text-left">Last Name</th>
+              <th class="text-left">Email</th>
+              <th class="text-left">Teams</th>
+              <th class="text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="inst in results"
+              :key="inst.id"
+              class="cursor-pointer"
+              @click="router.push(`/instructors/${inst.id}`)"
+            >
+              <td>{{ inst.firstName }}</td>
+              <td>{{ inst.lastName }}</td>
+              <td class="text-medium-emphasis">{{ inst.email }}</td>
+              <td class="text-medium-emphasis">{{ inst.teamNames || '—' }}</td>
+              <td>
+                <v-chip :color="inst.active ? 'success' : 'default'" size="small" variant="tonal">
+                  {{ inst.active ? 'Active' : 'Deactivated' }}
+                </v-chip>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card>
+
+    </template>
 
     <!-- Shareable Link Dialog -->
     <v-dialog v-model="linkDialog" max-width="540">
@@ -49,7 +159,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- Success snackbar (e.g. after assign) -->
+    <!-- Success snackbar -->
     <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
       {{ snackbarMessage }}
     </v-snackbar>
@@ -57,12 +167,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { instructorsApi } from '@/api/instructors'
+import { instructorsApi, type InstructorSearchResult } from '@/api/instructors'
 
 const router = useRouter()
 
+// ── Search ────────────────────────────────────────────────────────────────────
+const statusOptions = [
+  { label: 'Active',      value: true  },
+  { label: 'Deactivated', value: false },
+]
+
+const filters = reactive({
+  firstName: '',
+  lastName: '',
+  teamName: '',
+  status: null as boolean | null,
+})
+
+const results = ref<InstructorSearchResult[]>([])
+const loading = ref(false)
+const error = ref('')
+const searched = ref(false)
+
+async function search() {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await instructorsApi.searchInstructors({
+      firstName: filters.firstName || undefined,
+      lastName:  filters.lastName  || undefined,
+      teamName:  filters.teamName  || undefined,
+      active:    filters.status    ?? undefined,
+    })
+    results.value = res.data.data
+    searched.value = true
+  } catch {
+    error.value = 'Failed to search instructors. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function clearAndSearch() {
+  filters.firstName = ''
+  filters.lastName  = ''
+  filters.teamName  = ''
+  filters.status    = null
+  search()
+}
+
+// ── Invite link ───────────────────────────────────────────────────────────────
 const generating = ref(false)
 const generateError = ref('')
 const linkDialog = ref(false)
@@ -70,20 +226,9 @@ const generatedLink = ref('')
 const expiresAt = ref('')
 const copied = ref(false)
 
-const snackbar = ref(false)
-const snackbarMessage = ref('')
-
 const expiresFormatted = computed(() => {
   if (!expiresAt.value) return ''
   return new Date(expiresAt.value).toLocaleString()
-})
-
-onMounted(() => {
-  const msg = (history.state as any)?.successMessage
-  if (msg) {
-    snackbarMessage.value = msg
-    snackbar.value = true
-  }
 })
 
 async function generateLink() {
@@ -106,4 +251,16 @@ async function copyLink() {
   await navigator.clipboard.writeText(generatedLink.value)
   copied.value = true
 }
+
+// ── Snackbar ──────────────────────────────────────────────────────────────────
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+
+onMounted(() => {
+  const msg = (history.state as any)?.successMessage
+  if (msg) {
+    snackbarMessage.value = msg
+    snackbar.value = true
+  }
+})
 </script>

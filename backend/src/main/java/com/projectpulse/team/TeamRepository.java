@@ -24,6 +24,9 @@ public interface TeamRepository extends JpaRepository<TeamEntity, Long> {
     @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section s LEFT JOIN FETCH t.students WHERE s.id = :sectionId AND :student MEMBER OF t.students")
     Optional<TeamEntity> findBySectionAndStudent(@Param("sectionId") Long sectionId, @Param("student") com.projectpulse.user.UserEntity student);
 
+    @Query("SELECT t FROM TeamEntity t JOIN FETCH t.section LEFT JOIN FETCH t.instructors i WHERE i.id = :instructorId ORDER BY t.section.name ASC, t.name ASC")
+    List<TeamEntity> findByInstructorId(@Param("instructorId") Long instructorId);
+
     boolean existsByName(String name);
 
     boolean existsByNameAndIdNot(String name, Long id);
