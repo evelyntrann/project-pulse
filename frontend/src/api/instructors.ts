@@ -70,4 +70,7 @@ export const instructorsApi = {
 
   getInstructor: (id: number) =>
     api.get<{ success: boolean; data: InstructorDetail }>(`/instructors/${id}`),
+
+  deactivateInstructor: (id: number, reason: string) =>
+    api.patch<{ success: boolean; data: null }>(`/instructors/${id}/deactivate`, { reason }),
 }
