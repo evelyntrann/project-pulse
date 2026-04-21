@@ -24,6 +24,22 @@ export interface InstructorSummary {
   email: string
 }
 
+export interface InstructorSearchResult {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  active: boolean
+  teamNames: string | null
+}
+
+export interface InstructorSearchParams {
+  firstName?: string
+  lastName?: string
+  teamName?: string
+  active?: boolean
+}
+
 // ── API calls ────────────────────────────────────────────────────────────────
 
 export const instructorsApi = {
@@ -35,4 +51,7 @@ export const instructorsApi = {
 
   listInstructors: () =>
     api.get<{ success: boolean; data: InstructorSummary[] }>('/instructors'),
+
+  searchInstructors: (params: InstructorSearchParams) =>
+    api.get<{ success: boolean; data: InstructorSearchResult[] }>('/instructors/search', { params }),
 }
