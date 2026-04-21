@@ -164,6 +164,14 @@ public class TeamService {
     }
 
     @Transactional
+    public void removeInstructorFromTeam(Long teamId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+        team.setInstructor(null);
+        teamRepository.save(team);
+    }
+
+    @Transactional
     public void deleteTeam(Long teamId) {
         TeamEntity team = teamRepository.findByIdWithStudents(teamId)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));

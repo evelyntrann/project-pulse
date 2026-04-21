@@ -12,6 +12,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByEmail(String email);
 
+    List<UserEntity> findAllByRoleAndIsActiveTrue(String role);
+
     @Query(nativeQuery = true, value = """
             SELECT
                 u.id          AS id,

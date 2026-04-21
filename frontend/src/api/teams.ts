@@ -66,6 +66,9 @@ export const teamsApi = {
   assignInstructor: (teamId: number, instructorId: number) =>
     api.put<{ success: boolean; data: null }>(`/teams/${teamId}/instructors/${instructorId}`),
 
+  removeInstructor: (teamId: number) =>
+    api.delete<{ success: boolean; data: null }>(`/teams/${teamId}/instructor`),
+
   transferTeam: (teamId: number, sectionId: number) =>
     api.patch<{ success: boolean; data: TeamTransferResponse }>(`/teams/${teamId}/section`, { sectionId }),
 }
