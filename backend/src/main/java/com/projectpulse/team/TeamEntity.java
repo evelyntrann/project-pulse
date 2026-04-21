@@ -36,9 +36,13 @@ public class TeamEntity {
     )
     private Set<UserEntity> students = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "instructor_id")
-    private UserEntity instructor;
+    @ManyToMany
+    @JoinTable(
+            name = "team_instructors",
+            joinColumns = @JoinColumn(name = "team_id"),
+            inverseJoinColumns = @JoinColumn(name = "instructor_id")
+    )
+    private Set<UserEntity> instructors = new HashSet<>();
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -61,8 +65,8 @@ public class TeamEntity {
     public Set<UserEntity> getStudents() { return students; }
     public void setStudents(Set<UserEntity> students) { this.students = students; }
 
-    public UserEntity getInstructor() { return instructor; }
-    public void setInstructor(UserEntity instructor) { this.instructor = instructor; }
+    public Set<UserEntity> getInstructors() { return instructors; }
+    public void setInstructors(Set<UserEntity> instructors) { this.instructors = instructors; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
