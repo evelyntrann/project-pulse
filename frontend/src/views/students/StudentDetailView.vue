@@ -127,9 +127,10 @@ async function confirmDelete() {
   deleting.value = true
   deleteError.value = ''
   try {
+    const name = `${student.value?.firstName} ${student.value?.lastName}`
     await studentsApi.deleteStudent(Number(route.params.id))
     deleteDialog.value = false
-    router.push('/students')
+    router.push({ path: '/students', state: { successMessage: `${name} has been deleted.` } })
   } catch (err: any) {
     deleteError.value = err.response?.data?.error || 'Failed to delete student. Please try again.'
   } finally {

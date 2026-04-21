@@ -57,6 +57,28 @@
               @keyup.enter="search"
             />
           </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="filters.sectionId"
+              label="Section ID"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="filters.teamId"
+              label="Team ID"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              @keyup.enter="search"
+            />
+          </v-col>
         </v-row>
 
         <v-row class="mt-1">
@@ -135,11 +157,16 @@
       </v-card>
 
     </template>
+
+    <!-- Success snackbar (e.g. after delete) -->
+    <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { studentsApi, type StudentSearchResult } from '@/api/students'
@@ -155,12 +182,25 @@ const filters = reactive({
   email: '',
   sectionName: '',
   teamName: '',
+  sectionId: null as number | null,
+  teamId: null as number | null,
 })
 
 const results = ref<StudentSearchResult[]>([])
 const loading = ref(false)
 const error = ref('')
 const searched = ref(false)
+
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+
+onMounted(() => {
+  const msg = (history.state as any)?.successMessage
+  if (msg) {
+    snackbarMessage.value = msg
+    snackbar.value = true
+  }
+})
 
 async function search() {
   loading.value = true
@@ -172,9 +212,15 @@ async function search() {
       email:       filters.email       || undefined,
       sectionName: filters.sectionName || undefined,
       teamName:    filters.teamName    || undefined,
+      sectionId:   filters.sectionId   ?? undefined,
+      teamId:      filters.teamId      ?? undefined,
     }
     const res = await studentsApi.searchStudents(params)
-    results.value = res.data.data
+    results.value = [...res.data.data].sort((a, b) => {
+      const sectionCmp = (b.sectionName ?? '').localeCompare(a.sectionName ?? '')
+      if (sectionCmp !== 0) return sectionCmp
+      return (a.lastName ?? '').localeCompare(b.lastName ?? '')
+    })
     searched.value = true
   } catch {
     error.value = 'Failed to search students. Please try again.'
@@ -189,6 +235,8 @@ function clearAndSearch() {
   filters.email = ''
   filters.sectionName = ''
   filters.teamName = ''
+  filters.sectionId = null
+  filters.teamId = null
   search()
 }
 </script>

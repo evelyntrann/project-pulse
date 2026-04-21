@@ -23,6 +23,12 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
 
+    {
+      path: '/join/:token',
+      name: 'join-section',
+      component: () => import('@/views/JoinSectionView.vue'),
+    },
+
     // ── Authenticated shell ─────────────────────────────────────────────────
     {
       path: '/',
