@@ -12,9 +12,17 @@ export interface InstructorInviteResponse {
   emails: string[]
 }
 
+export interface InviteLinkResponse {
+  shareableLink: string
+  expiresAt: string
+}
+
 // ── API calls ────────────────────────────────────────────────────────────────
 
 export const instructorsApi = {
   inviteInstructors: (data: InstructorInviteRequest) =>
     api.post<{ success: boolean; data: InstructorInviteResponse }>('/invitations/instructors', data),
+
+  generateInstructorLink: () =>
+    api.post<{ success: boolean; data: InviteLinkResponse }>('/invitations/instructors/link'),
 }

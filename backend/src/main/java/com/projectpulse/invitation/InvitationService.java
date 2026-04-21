@@ -38,6 +38,24 @@ public class InvitationService {
     }
 
     @Transactional
+    public InviteLinkResponse generateInstructorLink(Long adminId) {
+        var admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new NoSuchElementException("Admin not found"));
+
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
+
+        InvitationEntity invite = new InvitationEntity();
+        invite.setRole("INSTRUCTOR");
+        invite.setToken(token);
+        invite.setInvitedBy(admin);
+        invite.setExpiresAt(expiresAt);
+        invitationRepository.save(invite);
+
+        return new InviteLinkResponse(baseUrl + "/join/" + token, expiresAt);
+    }
+
+    @Transactional
     public InviteLinkResponse generateInviteLink(InviteLinkRequest request, Long adminId) {
         var section = sectionRepository.findById(request.sectionId())
                 .orElseThrow(() -> new NoSuchElementException("Section not found"));
@@ -69,10 +87,8 @@ public class InvitationService {
             throw new IllegalStateException("This invitation link has expired.");
         }
 
-        return new InvitationInfoResponse(
-                invite.getSection().getName(),
-                invite.getExpiresAt()
-        );
+        String sectionName = invite.getSection() != null ? invite.getSection().getName() : null;
+        return new InvitationInfoResponse(invite.getRole(), sectionName, invite.getExpiresAt());
     }
 
     @Transactional
@@ -90,17 +106,19 @@ public class InvitationService {
             throw new IllegalArgumentException("An account with this email already exists.");
         }
 
-        UserEntity student = new UserEntity();
-        student.setFirstName(request.firstName());
-        student.setLastName(request.lastName());
-        student.setEmail(request.email());
-        student.setPasswordHash(passwordEncoder.encode(request.password()));
-        student.setRole("STUDENT");
-        userRepository.save(student);
+        UserEntity newUser = new UserEntity();
+        newUser.setFirstName(request.firstName());
+        newUser.setLastName(request.lastName());
+        newUser.setEmail(request.email());
+        newUser.setPasswordHash(passwordEncoder.encode(request.password()));
+        newUser.setRole(invite.getRole());
+        userRepository.save(newUser);
 
-        var section = invite.getSection();
-        section.getEnrolledStudents().add(student);
-        sectionRepository.save(section);
+        if ("STUDENT".equals(invite.getRole()) && invite.getSection() != null) {
+            var section = invite.getSection();
+            section.getEnrolledStudents().add(newUser);
+            sectionRepository.save(section);
+        }
 
         invite.setAcceptedAt(LocalDateTime.now());
         invitationRepository.save(invite);

@@ -12,9 +12,13 @@
 
     <!-- Registration form -->
     <template v-else>
-      <h1 class="text-h5 font-weight-bold mb-1">Join {{ sectionName }}</h1>
+      <h1 class="text-h5 font-weight-bold mb-1">
+        {{ role === 'INSTRUCTOR' ? 'Create Instructor Account' : `Join ${sectionName}` }}
+      </h1>
       <p class="text-body-2 text-medium-emphasis mb-6">
-        Create your account to join this Senior Design section.
+        {{ role === 'INSTRUCTOR'
+          ? 'Create your account to get access as an instructor.'
+          : 'Create your account to join this Senior Design section.' }}
       </p>
 
       <v-card variant="outlined">
@@ -93,7 +97,12 @@
           <v-icon color="success" size="48" class="mb-3">mdi-check-circle-outline</v-icon>
           <h2 class="text-h6 font-weight-bold mb-2">You're in!</h2>
           <p class="text-body-2 text-medium-emphasis">
-            Your account has been created and you've been added to <strong>{{ sectionName }}</strong>.
+            <template v-if="role === 'INSTRUCTOR'">
+              Your instructor account has been created successfully.
+            </template>
+            <template v-else>
+              Your account has been created and you've been added to <strong>{{ sectionName }}</strong>.
+            </template>
           </p>
         </v-card-text>
         <v-card-actions class="px-6 pb-4">
@@ -114,6 +123,7 @@ const route = useRoute()
 
 const loadingInfo = ref(true)
 const tokenError = ref('')
+const role = ref('')
 const sectionName = ref('')
 
 const formRef = ref()
@@ -137,7 +147,8 @@ const passwordsMatch = (v: string) => v === form.password || 'Passwords do not m
 onMounted(async () => {
   try {
     const res = await invitationsApi.getInvitationInfo(route.params.token as string)
-    sectionName.value = res.data.data.sectionName
+    role.value = res.data.data.role
+    sectionName.value = res.data.data.sectionName ?? ''
   } catch (err: any) {
     tokenError.value = err.response?.data?.error
       || err.response?.data?.message
