@@ -81,19 +81,12 @@
     <!-- Results -->
     <template v-if="searched">
 
-      <!-- Empty state (extension 4a) -->
+      <!-- Empty state -->
       <v-alert v-if="results.length === 0" type="info" variant="tonal" class="mb-4">
         <div class="font-weight-medium mb-1">No matching instructors found.</div>
         <div class="text-body-2">
           Try adjusting your search criteria, or
-          <v-btn
-            variant="text"
-            size="small"
-            density="compact"
-            class="px-1"
-            :loading="generating"
-            @click="generateLink"
-          >
+          <v-btn variant="text" size="small" density="compact" class="px-1" :loading="generating" @click="generateLink">
             generate an invite link
           </v-btn>
           to invite a new instructor.
@@ -127,11 +120,7 @@
               <td class="text-medium-emphasis">{{ inst.email }}</td>
               <td class="text-medium-emphasis">{{ inst.teamNames || '—' }}</td>
               <td>
-                <v-chip
-                  :color="inst.active ? 'success' : 'default'"
-                  size="small"
-                  variant="tonal"
-                >
+                <v-chip :color="inst.active ? 'success' : 'default'" size="small" variant="tonal">
                   {{ inst.active ? 'Active' : 'Deactivated' }}
                 </v-chip>
               </td>
@@ -206,13 +195,12 @@ async function search() {
   loading.value = true
   error.value = ''
   try {
-    const params = {
+    const res = await instructorsApi.searchInstructors({
       firstName: filters.firstName || undefined,
       lastName:  filters.lastName  || undefined,
       teamName:  filters.teamName  || undefined,
       active:    filters.status    ?? undefined,
-    }
-    const res = await instructorsApi.searchInstructors(params)
+    })
     results.value = res.data.data
     searched.value = true
   } catch {
