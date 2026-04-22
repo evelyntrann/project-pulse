@@ -118,7 +118,28 @@
             :title="`${i.firstName} ${i.lastName}`"
             :subtitle="i.email"
             prepend-icon="mdi-account-tie"
-          />
+          >
+            <template v-if="authStore.user?.role === 'ADMIN'" #append>
+              <v-tooltip
+                :text="team.instructors.length <= 1 ? 'Team must have at least one instructor' : 'Remove instructor'"
+                location="top"
+              >
+                <template #activator="{ props }">
+                  <span v-bind="props">
+                    <v-btn
+                      icon="mdi-account-remove"
+                      variant="text"
+                      color="error"
+                      size="small"
+                      :disabled="team.instructors.length <= 1"
+                      :loading="removingInstructorId === i.id"
+                      @click="promptRemoveInstructor(i)"
+                    />
+                  </span>
+                </template>
+              </v-tooltip>
+            </template>
+          </v-list-item>
         </v-list>
       </v-card>
     </template>
@@ -167,12 +188,33 @@
       </v-card>
     </v-dialog>
 
+    <!-- Confirm remove instructor dialog -->
+    <v-dialog v-model="confirmInstructorDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title class="text-h6">Remove instructor?</v-card-title>
+        <v-card-text v-if="instructorToRemove">
+          Remove <strong>{{ instructorToRemove.firstName }} {{ instructorToRemove.lastName }}</strong>
+          from <strong>{{ team?.name }}</strong>?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelRemoveInstructor">Cancel</v-btn>
+          <v-btn color="error" variant="tonal" :loading="removingInstructorId !== null" @click="confirmRemoveInstructor">
+            Remove
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbars -->
     <v-snackbar v-model="savedSnackbar" color="success" timeout="3000" location="bottom">
       Team updated successfully.
     </v-snackbar>
     <v-snackbar v-model="removedSnackbar" color="success" timeout="3000" location="bottom">
       Student removed successfully.
+    </v-snackbar>
+    <v-snackbar v-model="instructorRemovedSnackbar" color="success" timeout="3000" location="bottom">
+      Instructor removed successfully.
     </v-snackbar>
     <v-snackbar v-model="removeErrorSnackbar" color="error" timeout="4000" location="bottom">
       {{ removeError }}
@@ -185,6 +227,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { teamsApi, type TeamDetail, type TeamMember } from '@/api/teams'
 import { useAuthStore } from '@/stores/auth'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -201,6 +244,11 @@ const removeError = ref('')
 const confirmDialog = ref(false)
 const studentToRemove = ref<TeamMember | null>(null)
 const removingId = ref<number | null>(null)
+
+const confirmInstructorDialog = ref(false)
+const instructorToRemove = ref<TeamMember | null>(null)
+const removingInstructorId = ref<number | null>(null)
+const instructorRemovedSnackbar = ref(false)
 
 const deleteDialog = ref(false)
 const deleting = ref(false)
@@ -259,6 +307,36 @@ async function confirmRemove() {
     removeErrorSnackbar.value = true
   } finally {
     removingId.value = null
+  }
+}
+
+function promptRemoveInstructor(instructor: TeamMember) {
+  instructorToRemove.value = instructor
+  confirmInstructorDialog.value = true
+}
+
+function cancelRemoveInstructor() {
+  confirmInstructorDialog.value = false
+  instructorToRemove.value = null
+}
+
+async function confirmRemoveInstructor() {
+  if (!team.value || !instructorToRemove.value) return
+  removingInstructorId.value = instructorToRemove.value.id
+  try {
+    await teamsApi.removeInstructor(team.value.id, instructorToRemove.value.id)
+    team.value = {
+      ...team.value,
+      instructors: team.value.instructors.filter(i => i.id !== instructorToRemove.value!.id),
+    }
+    confirmInstructorDialog.value = false
+    instructorToRemove.value = null
+    instructorRemovedSnackbar.value = true
+  } catch (err: any) {
+    removeError.value = err.response?.data?.error || 'Failed to remove instructor. Please try again.'
+    removeErrorSnackbar.value = true
+  } finally {
+    removingInstructorId.value = null
   }
 }
 </script>

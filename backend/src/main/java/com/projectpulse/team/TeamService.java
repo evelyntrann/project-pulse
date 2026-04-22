@@ -22,6 +22,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
+
     public TeamService(TeamRepository teamRepository,
                        SectionRepository sectionRepository,
                        UserRepository userRepository) {
@@ -45,9 +46,7 @@ public class TeamService {
         team.setWebsiteUrl(request.websiteUrl());
         team.setSection(section);
 
-        TeamEntity saved = teamRepository.save(team);
-
-        return toDetailResponse(saved);
+        return toDetailResponse(teamRepository.save(team));
     }
 
     public TeamDetailResponse getTeam(Long id) {
@@ -69,12 +68,10 @@ public class TeamService {
         team.setDescription(request.description());
         team.setWebsiteUrl(request.websiteUrl());
 
-        TeamEntity saved = teamRepository.save(team);
-        return toDetailResponse(saved);
+        return toDetailResponse(teamRepository.save(team));
     }
 
     public List<TeamSummaryResponse> findTeams(Long sectionId, String name) {
-        // TODO: add instructorId filter once Angel builds user/instructor assignment (UC-19)
         return teamRepository.findByFiltersWithStudents(sectionId, name).stream()
                 .map(team -> new TeamSummaryResponse(
                         team.getId(),
@@ -84,13 +81,7 @@ public class TeamService {
                         team.getSection().getId(),
                         team.getSection().getName(),
                         toSummaryMemberDtos(team.getStudents()),
-                        team.getInstructor() != null
-                                ? List.of(new TeamSummaryResponse.MemberDto(
-                                        team.getInstructor().getId(),
-                                        team.getInstructor().getFirstName(),
-                                        team.getInstructor().getLastName(),
-                                        team.getInstructor().getEmail()))
-                                : List.of()
+                        toSummaryMemberDtos(team.getInstructors())
                 ))
                 .toList();
     }
@@ -106,9 +97,7 @@ public class TeamService {
         }
 
         for (UserEntity student : students) {
-            // Skip if already on this team
             if (team.getStudents().stream().anyMatch(s -> s.getId().equals(student.getId()))) continue;
-            // Remove from any other team in the same section first
             teamRepository.findBySectionAndStudent(team.getSection().getId(), student)
                     .ifPresent(oldTeam -> oldTeam.getStudents().remove(student));
             team.getStudents().add(student);
@@ -128,11 +117,30 @@ public class TeamService {
             throw new IllegalArgumentException("User is not an instructor");
         }
 
-        // Replace existing instructor if different
-        if (!instructor.equals(team.getInstructor())) {
-            team.setInstructor(instructor);
+        boolean alreadyAssigned = team.getInstructors().stream()
+                .anyMatch(i -> i.getId().equals(instructorId));
+        if (!alreadyAssigned) {
+            team.getInstructors().add(instructor);
             teamRepository.save(team);
         }
+    }
+
+    @Transactional
+    public void removeInstructorFromTeam(Long teamId, Long instructorId) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        if (team.getInstructors().size() <= 1) {
+            throw new IllegalStateException("Cannot remove the last instructor. Every team must have at least one instructor.");
+        }
+
+        UserEntity instructor = team.getInstructors().stream()
+                .filter(i -> i.getId().equals(instructorId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Instructor not assigned to this team"));
+
+        team.getInstructors().remove(instructor);
+        teamRepository.save(team);
     }
 
     @Transactional
@@ -164,20 +172,10 @@ public class TeamService {
     }
 
     @Transactional
-    public void removeInstructorFromTeam(Long teamId) {
-        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
-                .orElseThrow(() -> new NoSuchElementException("Team not found"));
-        team.setInstructor(null);
-        teamRepository.save(team);
-    }
-
-    @Transactional
     public void deleteTeam(Long teamId) {
         TeamEntity team = teamRepository.findByIdWithStudents(teamId)
                 .orElseThrow(() -> new NoSuchElementException("Team not found"));
-
         teamRepository.delete(team);
-
     }
 
     @Transactional
@@ -191,48 +189,32 @@ public class TeamService {
                 .orElseThrow(() -> new NoSuchElementException("Student not found in team"));
 
         team.getStudents().remove(student);
-        TeamEntity saved = teamRepository.save(team);
-
-        return toDetailResponse(saved);
+        return toDetailResponse(teamRepository.save(team));
     }
 
-    // ---- helpers ----
+    // ── helpers ────────────────────────────────────────────────────────────────
 
     private TeamDetailResponse toDetailResponse(TeamEntity team) {
-        List<TeamDetailResponse.MemberDto> instructors = team.getInstructor() != null
-                ? List.of(new TeamDetailResponse.MemberDto(
-                        team.getInstructor().getId(),
-                        team.getInstructor().getFirstName(),
-                        team.getInstructor().getLastName(),
-                        team.getInstructor().getEmail()))
-                : List.of();
-
         return new TeamDetailResponse(
                 team.getId(),
                 team.getName(),
                 team.getDescription(),
                 team.getWebsiteUrl(),
-                new TeamDetailResponse.SectionDto(
-                        team.getSection().getId(),
-                        team.getSection().getName()
-                ),
+                new TeamDetailResponse.SectionDto(team.getSection().getId(), team.getSection().getName()),
                 toMemberDtos(team.getStudents()),
-                instructors
+                toMemberDtos(team.getInstructors())
         );
     }
 
     private List<TeamDetailResponse.MemberDto> toMemberDtos(java.util.Collection<UserEntity> users) {
         return users.stream()
-                .map(u -> new TeamDetailResponse.MemberDto(
-                        u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
+                .map(u -> new TeamDetailResponse.MemberDto(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
                 .toList();
     }
 
     private List<TeamSummaryResponse.MemberDto> toSummaryMemberDtos(java.util.Collection<UserEntity> users) {
         return users.stream()
-                .map(u -> new TeamSummaryResponse.MemberDto(
-                        u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
+                .map(u -> new TeamSummaryResponse.MemberDto(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail()))
                 .toList();
     }
-
 }
