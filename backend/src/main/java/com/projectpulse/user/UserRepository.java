@@ -20,6 +20,34 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
                 u.first_name  AS firstName,
                 u.last_name   AS lastName,
                 u.email       AS email,
+                u.is_active   AS isActive,
+                (SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')
+                 FROM team_instructors ti2 JOIN teams t ON ti2.team_id = t.id
+                 WHERE ti2.instructor_id = u.id) AS teamNames
+            FROM users u
+            WHERE u.role = 'INSTRUCTOR'
+              AND (:firstName IS NULL OR u.first_name LIKE CONCAT('%', :firstName, '%'))
+              AND (:lastName  IS NULL OR u.last_name  LIKE CONCAT('%', :lastName,  '%'))
+              AND (:isActive  IS NULL OR u.is_active = :isActive)
+              AND (:teamName  IS NULL OR EXISTS (
+                    SELECT 1 FROM team_instructors ti JOIN teams t ON ti.team_id = t.id
+                    WHERE ti.instructor_id = u.id AND t.name LIKE CONCAT('%', :teamName, '%')
+                  ))
+            ORDER BY u.last_name ASC, u.first_name ASC
+            """)
+    List<InstructorSearchProjection> searchInstructors(
+            @Param("firstName") String firstName,
+            @Param("lastName")  String lastName,
+            @Param("teamName")  String teamName,
+            @Param("isActive")  Boolean isActive
+    );
+
+    @Query(nativeQuery = true, value = """
+            SELECT
+                u.id          AS id,
+                u.first_name  AS firstName,
+                u.last_name   AS lastName,
+                u.email       AS email,
                 s.name        AS sectionName,
                 t.name        AS teamName
             FROM users u
@@ -63,34 +91,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             @Param("teamName")    String teamName,
             @Param("sectionId")   Long sectionId,
             @Param("teamId")      Long teamId
-    );
-
-    @Query(nativeQuery = true, value = """
-            SELECT
-                u.id          AS id,
-                u.first_name  AS firstName,
-                u.last_name   AS lastName,
-                u.email       AS email,
-                u.is_active   AS isActive,
-                (SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')
-                 FROM team_instructors ti2 JOIN teams t ON ti2.team_id = t.id
-                 WHERE ti2.instructor_id = u.id) AS teamNames
-            FROM users u
-            WHERE u.role = 'INSTRUCTOR'
-              AND (:firstName IS NULL OR u.first_name LIKE CONCAT('%', :firstName, '%'))
-              AND (:lastName  IS NULL OR u.last_name  LIKE CONCAT('%', :lastName,  '%'))
-              AND (:isActive  IS NULL OR u.is_active = :isActive)
-              AND (:teamName  IS NULL OR EXISTS (
-                    SELECT 1 FROM team_instructors ti JOIN teams t ON ti.team_id = t.id
-                    WHERE ti.instructor_id = u.id AND t.name LIKE CONCAT('%', :teamName, '%')
-                  ))
-            ORDER BY u.last_name ASC, u.first_name ASC
-            """)
-    List<InstructorSearchProjection> searchInstructors(
-            @Param("firstName") String firstName,
-            @Param("lastName")  String lastName,
-            @Param("teamName")  String teamName,
-            @Param("isActive")  Boolean isActive
     );
 
     @Modifying

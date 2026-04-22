@@ -81,7 +81,7 @@
     <!-- Results -->
     <template v-if="searched">
 
-      <!-- Empty state (extension 4a) -->
+      <!-- Empty state -->
       <v-alert v-if="results.length === 0" type="info" variant="tonal" class="mb-4">
         <div class="font-weight-medium mb-1">No matching instructors found.</div>
         <div class="text-body-2">
@@ -173,7 +173,7 @@ import { instructorsApi, type InstructorSearchResult } from '@/api/instructors'
 
 const router = useRouter()
 
-// ── Search ────────────────────────────────────────────────────────────────────
+// ── Search ───────────────────────────────────────────────────────────────────
 const statusOptions = [
   { label: 'Active',      value: true  },
   { label: 'Deactivated', value: false },
@@ -252,7 +252,7 @@ async function copyLink() {
   copied.value = true
 }
 
-// ── Snackbar ──────────────────────────────────────────────────────────────────
+// ── Snackbar (after assign redirect) ─────────────────────────────────────────
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 
