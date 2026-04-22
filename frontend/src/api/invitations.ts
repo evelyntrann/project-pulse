@@ -6,7 +6,8 @@ export interface InviteLinkResponse {
 }
 
 export interface InvitationInfoResponse {
-  sectionName: string
+  role: string
+  sectionName: string | null
   expiresAt: string
 }
 

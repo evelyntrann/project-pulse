@@ -21,6 +21,14 @@ public class InvitationController {
         this.invitationService = invitationService;
     }
 
+    @PostMapping("/instructors/link")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<InviteLinkResponse>> generateInstructorLink(
+            Authentication authentication) {
+        Long adminId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.ok(invitationService.generateInstructorLink(adminId)));
+    }
+
     @PostMapping("/students/link")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<InviteLinkResponse>> generateInviteLink(

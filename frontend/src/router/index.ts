@@ -154,8 +154,21 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['ADMIN', 'INSTRUCTOR'] },
         },
 
+        // ── Instructors (ADMIN) ───────────────────────────────────────────
+        {
+          path: 'instructors',
+          name: 'instructors',
+          component: () => import('@/views/instructors/InstructorListView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
+        {
+          path: 'instructors/invite',
+          name: 'instructors-invite',
+          component: () => import('@/views/instructors/InstructorInviteView.vue'),
+          meta: { requiresAuth: true, roles: ['ADMIN'] },
+        },
+
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Angel  → UC-15–24: /instructors
         // Micah  → UC-25–34: /activities, /evaluations, /reports
       ],
     },
