@@ -85,6 +85,25 @@ public class InstructorController {
                 supervisedTeams)));
     }
 
+    // UC-24: reactivate instructor
+    @PatchMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> reactivateInstructor(@PathVariable Long id) {
+        UserEntity instructor = userRepository.findById(id)
+                .filter(u -> "INSTRUCTOR".equals(u.getRole()))
+                .orElseThrow(() -> new NoSuchElementException("Instructor not found"));
+
+        if (instructor.isActive()) {
+            throw new IllegalStateException("Instructor is already active.");
+        }
+
+        instructor.setActive(true);
+        instructor.setDeactivationReason(null);
+        userRepository.save(instructor);
+
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     // UC-23: deactivate instructor
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasRole('ADMIN')")

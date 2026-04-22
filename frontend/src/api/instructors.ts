@@ -56,4 +56,7 @@ export const instructorsApi = {
 
   deactivateInstructor: (id: number, reason: string) =>
     api.patch<{ success: boolean; data: null }>(`/instructors/${id}/deactivate`, { reason }),
+
+  reactivateInstructor: (id: number) =>
+    api.patch<{ success: boolean; data: null }>(`/instructors/${id}/reactivate`),
 }

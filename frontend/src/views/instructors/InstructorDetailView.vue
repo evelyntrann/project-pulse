@@ -28,7 +28,16 @@
         </div>
         <v-spacer />
         <v-btn
-          v-if="instructor.active"
+          v-if="!instructor.active"
+          color="success"
+          variant="outlined"
+          prepend-icon="mdi-account-check-outline"
+          @click="reactivateDialog = true"
+        >
+          Reactivate
+        </v-btn>
+        <v-btn
+          v-else
           color="error"
           variant="outlined"
           prepend-icon="mdi-account-off-outline"
@@ -95,6 +104,27 @@
       </v-card>
     </template>
 
+    <!-- Reactivate Dialog -->
+    <v-dialog v-model="reactivateDialog" max-width="440" persistent>
+      <v-card>
+        <v-card-title class="text-h6 pa-6 pb-2">Reactivate Instructor?</v-card-title>
+        <v-card-text class="pa-6 pt-0">
+          <p>
+            Reactivate <strong>{{ instructor?.firstName }} {{ instructor?.lastName }}</strong>?
+            They will regain full access to the system.
+          </p>
+          <v-alert v-if="reactivateError" type="error" variant="tonal" density="compact" class="mt-3">
+            {{ reactivateError }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-4">
+          <v-btn variant="outlined" @click="reactivateDialog = false">Cancel</v-btn>
+          <v-spacer />
+          <v-btn color="success" :loading="reactivating" @click="confirmReactivate">Reactivate</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Deactivate Dialog -->
     <v-dialog v-model="deactivateDialog" max-width="500" persistent>
       <v-card>
@@ -156,6 +186,25 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// ── Reactivate ───────────────────────────────────────────────────────────────
+const reactivateDialog = ref(false)
+const reactivateError = ref('')
+const reactivating = ref(false)
+
+async function confirmReactivate() {
+  reactivating.value = true
+  reactivateError.value = ''
+  try {
+    await instructorsApi.reactivateInstructor(Number(route.params.id))
+    instructor.value = { ...instructor.value!, active: true }
+    reactivateDialog.value = false
+  } catch (err: any) {
+    reactivateError.value = err.response?.data?.error || 'Failed to reactivate. Please try again.'
+  } finally {
+    reactivating.value = false
+  }
+}
 
 // ── Deactivate ────────────────────────────────────────────────────────────────
 const deactivateDialog = ref(false)
