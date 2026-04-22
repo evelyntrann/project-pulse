@@ -86,6 +86,13 @@ public class TeamController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
+    @DeleteMapping("/{id}/instructor")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> removeInstructorFromTeam(@PathVariable Long id) {
+        teamService.removeInstructorFromTeam(id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @PatchMapping("/{id}/section")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<TeamTransferResponse>> transferTeam(

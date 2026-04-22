@@ -3,6 +3,9 @@
     <div class="d-flex align-center mb-6">
       <h1 class="text-h5 font-weight-bold">Instructors</h1>
       <v-spacer />
+      <v-btn variant="outlined" class="mr-2" prepend-icon="mdi-account-group" @click="router.push('/instructors/assign')">
+        Assign to Teams
+      </v-btn>
       <v-btn color="primary" prepend-icon="mdi-link-variant" :loading="generating" @click="generateLink">
         Generate Invite Link
       </v-btn>
@@ -45,12 +48,20 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Success snackbar (e.g. after assign) -->
+    <v-snackbar v-model="snackbar" color="success" timeout="3000" location="bottom">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { instructorsApi } from '@/api/instructors'
+
+const router = useRouter()
 
 const generating = ref(false)
 const generateError = ref('')
@@ -59,9 +70,20 @@ const generatedLink = ref('')
 const expiresAt = ref('')
 const copied = ref(false)
 
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+
 const expiresFormatted = computed(() => {
   if (!expiresAt.value) return ''
   return new Date(expiresAt.value).toLocaleString()
+})
+
+onMounted(() => {
+  const msg = (history.state as any)?.successMessage
+  if (msg) {
+    snackbarMessage.value = msg
+    snackbar.value = true
+  }
 })
 
 async function generateLink() {
