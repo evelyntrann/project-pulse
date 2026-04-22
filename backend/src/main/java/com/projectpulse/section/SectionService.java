@@ -158,20 +158,16 @@ public class SectionService {
 
         // Collect all instructor IDs already assigned to a team in this section
         Set<Long> assignedInstructorIds = section.getTeams().stream()
-                .filter(t -> t.getInstructor() != null)
-                .map(t -> t.getInstructor().getId())
+                .flatMap(t -> t.getInstructors().stream())
+                .map(UserEntity::getId)
                 .collect(Collectors.toSet());
 
         List<SectionDetailResponse.TeamDto> teamDtos = section.getTeams().stream()
                 .map(team -> {
-                    List<SectionDetailResponse.UserDto> teamInstructors;
-                    if (team.getInstructor() != null) {
-                        UserEntity instr = team.getInstructor();
-                        teamInstructors = List.of(new SectionDetailResponse.UserDto(
-                                instr.getId(), instr.getFirstName(), instr.getLastName(), instr.getEmail()));
-                    } else {
-                        teamInstructors = List.of();
-                    }
+                    List<SectionDetailResponse.UserDto> teamInstructors = team.getInstructors().stream()
+                            .map(instr -> new SectionDetailResponse.UserDto(
+                                    instr.getId(), instr.getFirstName(), instr.getLastName(), instr.getEmail()))
+                            .toList();
                     return new SectionDetailResponse.TeamDto(
                             team.getId(),
                             team.getName(),
