@@ -27,7 +27,7 @@ public class InstructorController {
         this.teamRepository = teamRepository;
     }
 
-    // UC-21: search instructors
+    // UC-21: search instructors with optional filters
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<InstructorSearchResponse>>> searchInstructors(
@@ -60,7 +60,6 @@ public class InstructorController {
 
         List<TeamEntity> teams = teamRepository.findByInstructorId(id);
 
-        // Group teams by section, preserving alphabetical order
         record SectionKey(Long id, String name) {}
         var grouped = new java.util.LinkedHashMap<SectionKey, List<InstructorDetailResponse.TeamDto>>();
         for (TeamEntity t : teams) {
@@ -84,7 +83,7 @@ public class InstructorController {
                 supervisedTeams)));
     }
 
-    // Used by UC-19 assign view to populate the instructor dropdown
+    // Used internally by UC-19 assign view to populate the instructor dropdown
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<InstructorSummaryResponse>>> listInstructors() {
