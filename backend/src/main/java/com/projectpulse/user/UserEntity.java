@@ -29,6 +29,9 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean isActive = true;
 
+    @Column(columnDefinition = "TEXT")
+    private String deactivationReason;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -52,6 +55,9 @@ public class UserEntity {
 
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+
+    public String getDeactivationReason() { return deactivationReason; }
+    public void setDeactivationReason(String deactivationReason) { this.deactivationReason = deactivationReason; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

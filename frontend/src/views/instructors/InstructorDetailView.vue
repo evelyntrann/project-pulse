@@ -26,6 +26,16 @@
             {{ instructor.active ? 'Active' : 'Deactivated' }}
           </v-chip>
         </div>
+        <v-spacer />
+        <v-btn
+          v-if="instructor.active"
+          color="error"
+          variant="outlined"
+          prepend-icon="mdi-account-off-outline"
+          @click="openDeactivateDialog"
+        >
+          Deactivate
+        </v-btn>
       </div>
 
       <!-- Profile -->
@@ -39,6 +49,11 @@
           </v-list>
         </v-card-text>
       </v-card>
+
+      <!-- Deactivated banner -->
+      <v-alert v-if="!instructor.active" type="warning" variant="tonal" density="compact" class="mb-4">
+        This instructor has been deactivated and no longer has access to the system.
+      </v-alert>
 
       <!-- Supervised Teams -->
       <v-card variant="outlined">
@@ -79,6 +94,43 @@
         </template>
       </v-card>
     </template>
+
+    <!-- Deactivate Dialog -->
+    <v-dialog v-model="deactivateDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="text-h6 pa-6 pb-2">Deactivate Instructor?</v-card-title>
+        <v-card-text class="pa-6 pt-0">
+          <p class="mb-3">
+            You are about to deactivate
+            <strong>{{ instructor?.firstName }} {{ instructor?.lastName }}</strong>.
+          </p>
+          <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
+            This instructor will no longer have access to the system. Their information and team
+            assignments will be kept and the account can be reactivated in the future.
+          </v-alert>
+          <v-textarea
+            v-model="deactivateReason"
+            label="Reason for deactivation"
+            variant="outlined"
+            density="comfortable"
+            rows="3"
+            counter
+            :rules="[v => !!v.trim() || 'Reason is required']"
+            :error-messages="reasonError"
+          />
+          <v-alert v-if="deactivateError" type="error" variant="tonal" density="compact" class="mt-3">
+            {{ deactivateError }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-4">
+          <v-btn variant="outlined" @click="closeDeactivateDialog">Cancel</v-btn>
+          <v-spacer />
+          <v-btn color="error" :loading="deactivating" @click="confirmDeactivate">
+            Deactivate
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -104,4 +156,41 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// ── Deactivate ────────────────────────────────────────────────────────────────
+const deactivateDialog = ref(false)
+const deactivateReason = ref('')
+const reasonError = ref('')
+const deactivateError = ref('')
+const deactivating = ref(false)
+
+function openDeactivateDialog() {
+  deactivateReason.value = ''
+  reasonError.value = ''
+  deactivateError.value = ''
+  deactivateDialog.value = true
+}
+
+function closeDeactivateDialog() {
+  deactivateDialog.value = false
+}
+
+async function confirmDeactivate() {
+  if (!deactivateReason.value.trim()) {
+    reasonError.value = 'Reason is required'
+    return
+  }
+  reasonError.value = ''
+  deactivating.value = true
+  deactivateError.value = ''
+  try {
+    await instructorsApi.deactivateInstructor(Number(route.params.id), deactivateReason.value.trim())
+    instructor.value = { ...instructor.value!, active: false }
+    deactivateDialog.value = false
+  } catch (err: any) {
+    deactivateError.value = err.response?.data?.error || 'Failed to deactivate. Please try again.'
+  } finally {
+    deactivating.value = false
+  }
+}
 </script>

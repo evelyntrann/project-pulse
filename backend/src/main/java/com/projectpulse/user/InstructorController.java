@@ -3,11 +3,13 @@ package com.projectpulse.user;
 import com.projectpulse.common.ApiResponse;
 import com.projectpulse.team.TeamEntity;
 import com.projectpulse.team.TeamRepository;
+import com.projectpulse.user.dto.DeactivateInstructorRequest;
 import com.projectpulse.user.dto.InstructorDetailResponse;
 import com.projectpulse.user.dto.InstructorSearchResponse;
 import com.projectpulse.user.dto.InstructorSummaryResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -81,6 +83,27 @@ public class InstructorController {
                 instructor.getEmail(),
                 instructor.isActive(),
                 supervisedTeams)));
+    }
+
+    // UC-23: deactivate instructor
+    @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deactivateInstructor(
+            @PathVariable Long id,
+            @Valid @RequestBody DeactivateInstructorRequest request) {
+        UserEntity instructor = userRepository.findById(id)
+                .filter(u -> "INSTRUCTOR".equals(u.getRole()))
+                .orElseThrow(() -> new NoSuchElementException("Instructor not found"));
+
+        if (!instructor.isActive()) {
+            throw new IllegalStateException("Instructor is already deactivated.");
+        }
+
+        instructor.setActive(false);
+        instructor.setDeactivationReason(request.reason());
+        userRepository.save(instructor);
+
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     // Used internally by UC-19 assign view to populate the instructor dropdown
