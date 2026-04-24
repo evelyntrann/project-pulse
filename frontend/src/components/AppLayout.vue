@@ -125,8 +125,9 @@ const navItems = computed((): NavItem[] => {
   }
 
   if (role === 'STUDENT') {
-    items.push({ title: 'My WAR',  icon: 'mdi-file-document-edit', to: '/war' })
-    items.push({ title: 'Account', icon: 'mdi-account-edit',        to: '/profile' })
+    items.push({ title: 'My WAR',          icon: 'mdi-file-document-edit', to: '/war' })
+    items.push({ title: 'Peer Evaluation', icon: 'mdi-account-star',        to: '/peer-evaluations' })
+    items.push({ title: 'Account',         icon: 'mdi-account-edit',        to: '/profile' })
   }
 
   return items
