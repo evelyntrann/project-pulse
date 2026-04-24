@@ -180,8 +180,16 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['ADMIN'] },
         },
 
+        // ── Profile (STUDENT + INSTRUCTOR) ───────────────────────────────
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/profile/ProfileEditView.vue'),
+          meta: { requiresAuth: true, roles: ['STUDENT', 'INSTRUCTOR'] },
+        },
+
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Micah  → UC-25–34: /activities, /evaluations, /reports
+        // Micah  → UC-27–34: /war, /peer-evaluations, /reports
       ],
     },
 
