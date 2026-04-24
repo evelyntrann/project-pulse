@@ -8,6 +8,8 @@ public record StudentRegisterRequest(
         @NotBlank(message = "First name is required")
         String firstName,
 
+        String middleInitial,
+
         @NotBlank(message = "Last name is required")
         String lastName,
 

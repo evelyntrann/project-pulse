@@ -108,6 +108,7 @@ public class InvitationService {
 
         UserEntity newUser = new UserEntity();
         newUser.setFirstName(request.firstName());
+        newUser.setMiddleInitial(request.middleInitial());
         newUser.setLastName(request.lastName());
         newUser.setEmail(request.email());
         newUser.setPasswordHash(passwordEncoder.encode(request.password()));

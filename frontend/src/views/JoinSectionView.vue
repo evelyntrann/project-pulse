@@ -37,6 +37,16 @@
               :rules="[required]"
             />
             <v-text-field
+              v-if="role === 'INSTRUCTOR'"
+              v-model="form.middleInitial"
+              label="Middle Initial (optional)"
+              variant="outlined"
+              density="comfortable"
+              class="mb-3"
+              maxlength="1"
+              :rules="[singleChar]"
+            />
+            <v-text-field
               v-model="form.lastName"
               label="Last Name"
               variant="outlined"
@@ -96,6 +106,10 @@
         <v-list lines="two" density="compact">
           <v-list-item title="First Name" :subtitle="form.firstName" />
           <v-divider />
+          <template v-if="role === 'INSTRUCTOR' && form.middleInitial">
+            <v-list-item title="Middle Initial" :subtitle="form.middleInitial" />
+            <v-divider />
+          </template>
           <v-list-item title="Last Name" :subtitle="form.lastName" />
           <v-divider />
           <v-list-item title="Email" :subtitle="form.email" />
@@ -164,6 +178,7 @@ const successDialog = ref(false)
 
 const form = reactive({
   firstName: '',
+  middleInitial: '',
   lastName: '',
   email: '',
   password: '',
@@ -174,6 +189,7 @@ const required = (v: string) => !!v || 'This field is required'
 const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Invalid email address'
 const minLength = (v: string) => v.length >= 8 || 'Password must be at least 8 characters'
 const passwordsMatch = (v: string) => v === form.password || 'Passwords do not match'
+const singleChar = (v: string) => !v || /^[A-Za-z]$/.test(v) || 'Must be a single letter'
 
 onMounted(async () => {
   try {
@@ -217,6 +233,7 @@ async function submit() {
     } else {
       await invitationsApi.registerViaToken(token, {
         firstName: form.firstName,
+        middleInitial: form.middleInitial || null,
         lastName: form.lastName,
         email: form.email,
         password: form.password,
