@@ -125,8 +125,8 @@ const navItems = computed((): NavItem[] => {
   }
 
   if (role === 'STUDENT') {
-    items.push({ title: 'Account', icon: 'mdi-account-edit', to: '/profile' })
-    // Micah → UC-27–29: add WAR + Peer Eval when implemented
+    items.push({ title: 'My WAR',  icon: 'mdi-file-document-edit', to: '/war' })
+    items.push({ title: 'Account', icon: 'mdi-account-edit',        to: '/profile' })
   }
 
   return items

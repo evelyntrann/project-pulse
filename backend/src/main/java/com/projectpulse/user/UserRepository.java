@@ -93,6 +93,12 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             @Param("teamId")      Long teamId
     );
 
+    @Query(nativeQuery = true, value = "SELECT section_id FROM section_students WHERE student_id = :studentId LIMIT 1")
+    Optional<Long> findSectionIdByStudentId(@Param("studentId") Long studentId);
+
+    @Query(nativeQuery = true, value = "SELECT team_id FROM team_students WHERE student_id = :studentId LIMIT 1")
+    Optional<Long> findTeamIdByStudentId(@Param("studentId") Long studentId);
+
     @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM section_students WHERE student_id = :id")
     void deleteSectionMemberships(@Param("id") Long id);
