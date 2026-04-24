@@ -203,9 +203,15 @@ const router = createRouter({
           component: () => import('@/views/peer-evaluations/PeerEvalSubmitView.vue'),
           meta: { requiresAuth: true, roles: ['STUDENT'] },
         },
+        {
+          path: 'peer-evaluations/my-report',
+          name: 'peer-evaluations-my-report',
+          component: () => import('@/views/peer-evaluations/PeerEvalMyReportView.vue'),
+          meta: { requiresAuth: true, roles: ['STUDENT'] },
+        },
 
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Micah  → UC-29–34: /peer-evaluations/my-report, /reports
+        // Micah  → UC-30–34: /reports
       ],
     },
 

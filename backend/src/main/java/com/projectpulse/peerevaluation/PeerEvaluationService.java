@@ -1,6 +1,8 @@
 package com.projectpulse.peerevaluation;
 
 import com.projectpulse.peerevaluation.dto.*;
+
+import java.math.RoundingMode;
 import com.projectpulse.rubric.CriterionEntity;
 import com.projectpulse.rubric.RubricEntity;
 import com.projectpulse.rubric.RubricRepository;
@@ -182,6 +184,71 @@ public class PeerEvaluationService {
             results.add(toSummaryDto(eval));
         }
         return results;
+    }
+
+    // UC-29: the student's own received-scores report for one week.
+    // Never exposes private comments or evaluator identities.
+    @Transactional(readOnly = true)
+    public PeerEvalReportResponse getMyReport(Long studentId, LocalDate weekStartDate) {
+        UserEntity student = userRepository.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student not found"));
+
+        // JOIN FETCH loads scores in the same query — no N+1.
+        List<PeerEvaluationEntity> evals = peerEvalRepository
+                .findByEvaluateeIdAndWeekStartDateWithScores(studentId, weekStartDate);
+
+        String name = student.getFirstName() + " " + student.getLastName();
+
+        if (evals.isEmpty()) {
+            return new PeerEvalReportResponse(
+                    weekStartDate, name, 0, List.of(), List.of(),
+                    BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        Long sectionId = userRepository.findSectionIdByStudentId(studentId)
+                .orElseThrow(() -> new IllegalStateException("You are not enrolled in a section."));
+        List<CriterionEntity> criteria = getCriterionEntities(sectionId);
+
+        int n = evals.size();
+
+        // For each criterion: average all received scores, accumulate grade totals.
+        List<CriterionAverageDto> criterionAverages = new ArrayList<>();
+        BigDecimal gradeNumerator   = BigDecimal.ZERO;
+        BigDecimal gradeDenominator = BigDecimal.ZERO;
+
+        for (CriterionEntity criterion : criteria) {
+            List<Integer> scores = evals.stream()
+                    .flatMap(ev -> ev.getScores().stream())
+                    .filter(s -> s.getCriterionId().equals(criterion.getId()))
+                    .map(PeerEvaluationScoreEntity::getScore)
+                    .toList();
+
+            BigDecimal avg = BigDecimal.ZERO;
+            if (!scores.isEmpty()) {
+                int total = scores.stream().mapToInt(Integer::intValue).sum();
+                avg = BigDecimal.valueOf(total)
+                        .divide(BigDecimal.valueOf(scores.size()), 2, RoundingMode.HALF_UP);
+                gradeNumerator = gradeNumerator.add(BigDecimal.valueOf(total));
+            }
+
+            // Denominator: each evaluator could give up to maxScore for this criterion.
+            gradeDenominator = gradeDenominator.add(
+                    criterion.getMaxScore().multiply(BigDecimal.valueOf(n)));
+
+            criterionAverages.add(new CriterionAverageDto(
+                    criterion.getId(), criterion.getName(), avg, criterion.getMaxScore()));
+        }
+
+        // Public comments — exclude null/blank; evaluator identity is never included.
+        List<String> publicComments = evals.stream()
+                .map(PeerEvaluationEntity::getPublicComment)
+                .filter(c -> c != null && !c.isBlank())
+                .toList();
+
+        return new PeerEvalReportResponse(
+                weekStartDate, name, n,
+                criterionAverages, publicComments,
+                gradeNumerator, gradeDenominator);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

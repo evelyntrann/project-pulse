@@ -52,6 +52,23 @@ export interface PeerEvalSubmitRequest {
   evaluations: EvaluationEntry[]
 }
 
+export interface CriterionAverage {
+  criterionId: number
+  criterionName: string
+  averageScore: number
+  maxScore: number
+}
+
+export interface PeerEvalReportResponse {
+  weekStartDate: string
+  evaluateeName: string
+  evaluatorCount: number
+  criterionAverages: CriterionAverage[]
+  publicComments: string[]
+  grade: number
+  maxGrade: number
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const peerEvaluationsApi = {
@@ -68,4 +85,9 @@ export const peerEvaluationsApi = {
 
   submit: (data: PeerEvalSubmitRequest) =>
     api.post<{ success: boolean; data: PeerEvalSummary[] }>('/peer-evaluations', data),
+
+  getMyReport: (weekStartDate: string) =>
+    api.get<{ success: boolean; data: PeerEvalReportResponse }>('/peer-evaluations/my-report', {
+      params: { weekStartDate },
+    }),
 }
