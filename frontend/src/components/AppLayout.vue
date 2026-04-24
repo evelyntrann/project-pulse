@@ -121,12 +121,12 @@ const navItems = computed((): NavItem[] => {
   if (role === 'INSTRUCTOR') {
     items.push({ title: 'Teams',    icon: 'mdi-account-group',    to: '/teams' })
     items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
-    // Micah → UC-25–28: add Activities/Evaluations when implemented
+    items.push({ title: 'Account',  icon: 'mdi-account-edit',     to: '/profile' })
   }
 
   if (role === 'STUDENT') {
-    // Micah → UC-29–32: add WAR + Peer Eval when implemented
-    // Angel → UC-33: add Rubrics (student view) when implemented
+    items.push({ title: 'Account', icon: 'mdi-account-edit', to: '/profile' })
+    // Micah → UC-27–29: add WAR + Peer Eval when implemented
   }
 
   return items
