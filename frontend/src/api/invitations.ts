@@ -13,6 +13,7 @@ export interface InvitationInfoResponse {
 
 export interface StudentRegisterRequest {
   firstName: string
+  middleInitial?: string | null
   lastName: string
   email: string
   password: string

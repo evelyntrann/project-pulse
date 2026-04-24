@@ -20,6 +20,9 @@ public class UserEntity {
     @Column(nullable = false)
     private String firstName;
 
+    @Column(length = 1)
+    private String middleInitial;
+
     @Column(nullable = false)
     private String lastName;
 
@@ -46,6 +49,9 @@ public class UserEntity {
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getMiddleInitial() { return middleInitial; }
+    public void setMiddleInitial(String middleInitial) { this.middleInitial = middleInitial; }
 
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
