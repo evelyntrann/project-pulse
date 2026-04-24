@@ -32,7 +32,18 @@ export interface StudentDetail {
 
 // ── API calls ────────────────────────────────────────────────────────────────
 
+export interface StudentRegisterRequest {
+  token: string
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+}
+
 export const studentsApi = {
+  register: (data: StudentRegisterRequest) =>
+    api.post<{ success: boolean; data: null }>('/students/register', data),
+
   searchStudents: (params: StudentSearchParams) =>
     api.get<{ success: boolean; data: StudentSearchResult[] }>('/students', { params }),
 

@@ -2,7 +2,10 @@ package com.projectpulse.user;
 
 import com.projectpulse.common.ApiResponse;
 import com.projectpulse.user.dto.StudentDetailResponse;
+import com.projectpulse.user.dto.StudentRegisterRequest;
 import com.projectpulse.user.dto.StudentSearchResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,12 @@ public class StudentController {
 
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody StudentRegisterRequest request) {
+        studentService.registerStudent(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(null));
     }
 
     @GetMapping("/{id}")
