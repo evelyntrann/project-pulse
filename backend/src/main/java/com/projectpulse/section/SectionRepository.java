@@ -25,4 +25,6 @@ public interface SectionRepository extends JpaRepository<SectionEntity, Long> {
     Optional<SectionEntity> findByIdWithInstructors(@Param("id") Long id);
 
     boolean existsByName(String name);
+
+    List<SectionEntity> findByEnrolledInstructorsId(Long instructorId);
 }

@@ -35,4 +35,10 @@ public interface PeerEvaluationRepository extends JpaRepository<PeerEvaluationEn
             @Param("weekStartDate") LocalDate weekStartDate);
 
     List<PeerEvaluationEntity> findByTeamId(Long teamId);
+
+    @Query("SELECT pe FROM PeerEvaluationEntity pe LEFT JOIN FETCH pe.scores " +
+           "WHERE pe.teamId IN :teamIds AND pe.weekStartDate = :weekStartDate")
+    List<PeerEvaluationEntity> findByTeamIdInAndWeekStartDateWithScores(
+            @Param("teamIds") List<Long> teamIds,
+            @Param("weekStartDate") LocalDate weekStartDate);
 }
