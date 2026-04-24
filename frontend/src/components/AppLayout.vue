@@ -119,9 +119,10 @@ const navItems = computed((): NavItem[] => {
   }
 
   if (role === 'INSTRUCTOR') {
-    items.push({ title: 'Teams',    icon: 'mdi-account-group',    to: '/teams' })
-    items.push({ title: 'Students', icon: 'mdi-account-multiple', to: '/students' })
-    items.push({ title: 'Account',  icon: 'mdi-account-edit',     to: '/profile' })
+    items.push({ title: 'Teams',              icon: 'mdi-account-group',    to: '/teams' })
+    items.push({ title: 'Students',           icon: 'mdi-account-multiple', to: '/students' })
+    items.push({ title: 'Peer Eval Report',   icon: 'mdi-chart-bar',        to: '/reports/peer-eval-section' })
+    items.push({ title: 'Account',            icon: 'mdi-account-edit',     to: '/profile' })
   }
 
   if (role === 'STUDENT') {
