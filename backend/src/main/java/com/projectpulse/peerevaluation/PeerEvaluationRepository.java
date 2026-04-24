@@ -21,8 +21,18 @@ public interface PeerEvaluationRepository extends JpaRepository<PeerEvaluationEn
     @Query("SELECT DISTINCT pe.weekStartDate FROM PeerEvaluationEntity pe WHERE pe.evaluatorId = :evaluatorId")
     List<LocalDate> findSubmittedWeeksByEvaluatorId(@Param("evaluatorId") Long evaluatorId);
 
-    // Used by report endpoints (UC-29, 31, 33)
-    List<PeerEvaluationEntity> findByEvaluateeIdAndWeekStartDate(Long evaluateeId, LocalDate weekStartDate);
-    List<PeerEvaluationEntity> findByTeamIdAndWeekStartDate(Long teamId, LocalDate weekStartDate);
+    // Used by report endpoints (UC-29, 31, 33) — JOIN FETCH avoids N+1 on scores
+    @Query("SELECT pe FROM PeerEvaluationEntity pe LEFT JOIN FETCH pe.scores " +
+           "WHERE pe.evaluateeId = :evaluateeId AND pe.weekStartDate = :weekStartDate")
+    List<PeerEvaluationEntity> findByEvaluateeIdAndWeekStartDateWithScores(
+            @Param("evaluateeId") Long evaluateeId,
+            @Param("weekStartDate") LocalDate weekStartDate);
+
+    @Query("SELECT pe FROM PeerEvaluationEntity pe LEFT JOIN FETCH pe.scores " +
+           "WHERE pe.teamId = :teamId AND pe.weekStartDate = :weekStartDate")
+    List<PeerEvaluationEntity> findByTeamIdAndWeekStartDateWithScores(
+            @Param("teamId") Long teamId,
+            @Param("weekStartDate") LocalDate weekStartDate);
+
     List<PeerEvaluationEntity> findByTeamId(Long teamId);
 }

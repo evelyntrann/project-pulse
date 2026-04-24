@@ -2,6 +2,7 @@ package com.projectpulse.peerevaluation;
 
 import com.projectpulse.common.ApiResponse;
 import com.projectpulse.peerevaluation.dto.PeerEvalContextResponse;
+import com.projectpulse.peerevaluation.dto.PeerEvalReportResponse;
 import com.projectpulse.peerevaluation.dto.PeerEvalSubmitRequest;
 import com.projectpulse.peerevaluation.dto.PeerEvalSummaryDto;
 import jakarta.validation.Valid;
@@ -47,6 +48,16 @@ public class PeerEvaluationController {
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.ok(
                 peerEvalService.getContext(currentUserId(auth), weekStartDate)));
+    }
+
+    // Student's own received-scores report for a week. Never exposes private
+    // comments or evaluator identities — those are stripped in the service.
+    @GetMapping("/my-report")
+    public ResponseEntity<ApiResponse<PeerEvalReportResponse>> getMyReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStartDate,
+            Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                peerEvalService.getMyReport(currentUserId(auth), weekStartDate)));
     }
 
     // Submit (or re-submit/edit) all peer evaluations for a week.
