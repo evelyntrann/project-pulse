@@ -188,8 +188,16 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['STUDENT', 'INSTRUCTOR'] },
         },
 
+        // ── WAR (STUDENT) ────────────────────────────────────────────────
+        {
+          path: 'war',
+          name: 'war',
+          component: () => import('@/views/war/WARView.vue'),
+          meta: { requiresAuth: true, roles: ['STUDENT'] },
+        },
+
         // ── Placeholder slots for teammates ──────────────────────────────
-        // Micah  → UC-27–34: /war, /peer-evaluations, /reports
+        // Micah  → UC-28–34: /peer-evaluations, /reports
       ],
     },
 
