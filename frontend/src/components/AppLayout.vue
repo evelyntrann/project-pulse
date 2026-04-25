@@ -121,15 +121,17 @@ const navItems = computed((): NavItem[] => {
   if (role === 'INSTRUCTOR') {
     items.push({ title: 'Teams',              icon: 'mdi-account-group',    to: '/teams' })
     items.push({ title: 'Students',           icon: 'mdi-account-multiple', to: '/students' })
+    items.push({ title: 'WAR Report',         icon: 'mdi-chart-box',        to: '/reports/war-team' })
     items.push({ title: 'Peer Eval Report',   icon: 'mdi-chart-bar',        to: '/reports/peer-eval-section' })
     items.push({ title: 'Account',            icon: 'mdi-account-edit',     to: '/profile' })
   }
 
   if (role === 'STUDENT') {
-    items.push({ title: 'My WAR',          icon: 'mdi-file-document-edit', to: '/war' })
-    items.push({ title: 'Peer Evaluation',    icon: 'mdi-account-star',  to: '/peer-evaluations' })
-    items.push({ title: 'My Peer Eval Report', icon: 'mdi-chart-bar',   to: '/peer-evaluations/my-report' })
-    items.push({ title: 'Account',             icon: 'mdi-account-edit', to: '/profile' })
+    items.push({ title: 'My WAR',               icon: 'mdi-file-document-edit', to: '/war' })
+    items.push({ title: 'Peer Evaluation',       icon: 'mdi-account-star',       to: '/peer-evaluations' })
+    items.push({ title: 'My Peer Eval Report',   icon: 'mdi-chart-bar',          to: '/peer-evaluations/my-report' })
+    items.push({ title: 'Team WAR Report',       icon: 'mdi-chart-box',          to: '/reports/war-team' })
+    items.push({ title: 'Account',               icon: 'mdi-account-edit',       to: '/profile' })
   }
 
   return items
