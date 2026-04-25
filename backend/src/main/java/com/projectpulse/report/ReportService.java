@@ -10,8 +10,11 @@ import com.projectpulse.section.ActiveWeekRepository;
 import com.projectpulse.section.SectionEntity;
 import com.projectpulse.section.SectionRepository;
 import com.projectpulse.team.TeamEntity;
+import com.projectpulse.team.TeamRepository;
 import com.projectpulse.user.UserEntity;
 import com.projectpulse.user.UserRepository;
+import com.projectpulse.war.WAREntity;
+import com.projectpulse.war.WARRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,17 +32,23 @@ public class ReportService {
     private final UserRepository userRepository;
     private final ActiveWeekRepository activeWeekRepository;
     private final RubricRepository rubricRepository;
+    private final TeamRepository teamRepository;
+    private final WARRepository warRepository;
 
     public ReportService(SectionRepository sectionRepository,
                          PeerEvaluationRepository peerEvalRepository,
                          UserRepository userRepository,
                          ActiveWeekRepository activeWeekRepository,
-                         RubricRepository rubricRepository) {
+                         RubricRepository rubricRepository,
+                         TeamRepository teamRepository,
+                         WARRepository warRepository) {
         this.sectionRepository = sectionRepository;
         this.peerEvalRepository = peerEvalRepository;
         this.userRepository = userRepository;
         this.activeWeekRepository = activeWeekRepository;
         this.rubricRepository = rubricRepository;
+        this.teamRepository = teamRepository;
+        this.warRepository = warRepository;
     }
 
     public List<InstructorSectionDto> getInstructorSections(Long instructorId) {
@@ -115,6 +124,82 @@ public class ReportService {
 
         return new PeerEvalSectionReportResponse(
                 weekStartDate, sectionWithTeams.getName(), maxGrade, studentEntries, nonSubmitters);
+    }
+
+    // UC-32: list of teams the instructor is assigned to (for team picker).
+    public List<InstructorTeamDto> getInstructorTeams(Long instructorId) {
+        return teamRepository.findByInstructorId(instructorId)
+                .stream()
+                .map(t -> new InstructorTeamDto(t.getId(), t.getName(), t.getSection().getName()))
+                .sorted(Comparator.comparing(InstructorTeamDto::sectionName)
+                        .thenComparing(InstructorTeamDto::teamName))
+                .toList();
+    }
+
+    // UC-32: the team a student belongs to (for auto-selection on student view).
+    @Transactional(readOnly = true)
+    public Optional<InstructorTeamDto> getStudentTeam(Long studentId) {
+        return userRepository.findTeamIdByStudentId(studentId)
+                .flatMap(teamRepository::findById)
+                .map(t -> new InstructorTeamDto(t.getId(), t.getName(), t.getSection().getName()));
+    }
+
+    // UC-32: available weeks for a team (delegates to section-level logic).
+    @Transactional(readOnly = true)
+    public List<LocalDate> getAvailableWeeksForTeam(Long teamId) {
+        TeamEntity team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+        return getAvailableWeeksForSection(team.getSection().getId());
+    }
+
+    // UC-32: WAR report for all students on a team for one week.
+    @Transactional(readOnly = true)
+    public WARTeamReportResponse getWARTeamReport(Long teamId, LocalDate weekStartDate,
+                                                   Long currentUserId, boolean isInstructor) {
+        TeamEntity team = teamRepository.findByIdWithStudents(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found"));
+
+        if (isInstructor) {
+            boolean assigned = team.getInstructors().stream()
+                    .anyMatch(i -> i.getId().equals(currentUserId));
+            if (!assigned) throw new IllegalArgumentException("You are not assigned to this team");
+        } else {
+            boolean member = team.getStudents().stream()
+                    .anyMatch(s -> s.getId().equals(currentUserId));
+            if (!member) throw new IllegalArgumentException("You are not a member of this team");
+        }
+
+        List<WAREntity> wars = warRepository.findByTeamIdAndWeekStartDateWithActivities(teamId, weekStartDate);
+        Map<Long, WAREntity> warByStudentId = wars.stream()
+                .collect(Collectors.toMap(w -> w.getStudent().getId(), w -> w));
+
+        List<WARStudentEntryDto> studentEntries = team.getStudents().stream()
+                .filter(s -> warByStudentId.containsKey(s.getId()))
+                .sorted(Comparator.comparing(UserEntity::getLastName)
+                        .thenComparing(UserEntity::getFirstName))
+                .map(s -> {
+                    WAREntity war = warByStudentId.get(s.getId());
+                    List<WARActivityDto> activities = war.getActivities().stream()
+                            .map(a -> new WARActivityDto(
+                                    a.getCategory(),
+                                    a.getPlannedActivity(),
+                                    a.getDescription(),
+                                    a.getPlannedHours(),
+                                    a.getActualHours(),
+                                    a.getStatus()))
+                            .toList();
+                    return new WARStudentEntryDto(s.getId(), s.getFirstName() + " " + s.getLastName(), activities);
+                })
+                .toList();
+
+        List<String> nonSubmitters = team.getStudents().stream()
+                .filter(s -> !warByStudentId.containsKey(s.getId()))
+                .sorted(Comparator.comparing(UserEntity::getLastName)
+                        .thenComparing(UserEntity::getFirstName))
+                .map(s -> s.getFirstName() + " " + s.getLastName())
+                .toList();
+
+        return new WARTeamReportResponse(weekStartDate, team.getName(), studentEntries, nonSubmitters);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
