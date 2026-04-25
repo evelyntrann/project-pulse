@@ -24,4 +24,11 @@ public interface WARRepository extends JpaRepository<WAREntity, Long> {
             @Param("teamId") Long teamId,
             @Param("weekStartDate") LocalDate weekStartDate
     );
+
+    @Query("SELECT DISTINCT w FROM WAREntity w LEFT JOIN FETCH w.activities " +
+           "WHERE w.student.id = :studentId AND w.weekStartDate IN :weeks")
+    List<WAREntity> findByStudentIdAndWeekStartDateInWithActivities(
+            @Param("studentId") Long studentId,
+            @Param("weeks") List<LocalDate> weeks
+    );
 }

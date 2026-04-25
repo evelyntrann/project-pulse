@@ -202,6 +202,55 @@ public class ReportService {
         return new WARTeamReportResponse(weekStartDate, team.getName(), studentEntries, nonSubmitters);
     }
 
+    // UC-34: WAR report for one student across a week range — INSTRUCTOR only.
+    @Transactional(readOnly = true)
+    public WARStudentReportResponse getWARStudentReport(
+            Long studentId, LocalDate startWeek, LocalDate endWeek, Long instructorId) {
+
+        if (!teamRepository.existsByInstructorsIdAndStudentsId(instructorId, studentId))
+            throw new IllegalArgumentException("You are not assigned to a team with this student");
+
+        UserEntity student = userRepository.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student not found"));
+
+        Long sectionId = userRepository.findSectionIdByStudentId(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student is not enrolled in a section"));
+
+        List<LocalDate> weeksInRange = activeWeekRepository.findBySectionIdOrderByWeekStartDate(sectionId)
+                .stream()
+                .filter(w -> w.isActive()
+                        && !w.getWeekStartDate().isBefore(startWeek)
+                        && !w.getWeekStartDate().isAfter(endWeek))
+                .map(w -> w.getWeekStartDate())
+                .toList();
+
+        List<WAREntity> wars = weeksInRange.isEmpty() ? List.of()
+                : warRepository.findByStudentIdAndWeekStartDateInWithActivities(studentId, weeksInRange);
+
+        Map<LocalDate, WAREntity> warByWeek = wars.stream()
+                .collect(Collectors.toMap(w -> w.getWeekStartDate(), w -> w));
+
+        List<WARWeekEntryDto> weeks = weeksInRange.stream()
+                .map(week -> {
+                    WAREntity war = warByWeek.get(week);
+                    if (war == null) return new WARWeekEntryDto(week, false, List.of());
+                    List<WARActivityDto> activities = war.getActivities().stream()
+                            .map(a -> new WARActivityDto(
+                                    a.getCategory(),
+                                    a.getPlannedActivity(),
+                                    a.getDescription(),
+                                    a.getPlannedHours(),
+                                    a.getActualHours(),
+                                    a.getStatus()))
+                            .toList();
+                    return new WARWeekEntryDto(week, true, activities);
+                })
+                .toList();
+
+        String studentName = student.getFirstName() + " " + student.getLastName();
+        return new WARStudentReportResponse(studentId, studentName, weeks);
+    }
+
     // UC-33: active weeks for the section the student belongs to.
     public List<LocalDate> getStudentAvailableWeeks(Long studentId) {
         Long sectionId = userRepository.findSectionIdByStudentId(studentId)

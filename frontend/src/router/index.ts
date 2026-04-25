@@ -235,7 +235,13 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['INSTRUCTOR'] },
         },
 
-        // Micah  → UC-34: /reports/war-student
+        // ── WAR Student Report (INSTRUCTOR) — UC-34 ──────────────────────
+        {
+          path: 'reports/war-student/:studentId',
+          name: 'reports-war-student',
+          component: () => import('@/views/reports/WARStudentReportView.vue'),
+          meta: { requiresAuth: true, roles: ['INSTRUCTOR'] },
+        },
       ],
     },
 
