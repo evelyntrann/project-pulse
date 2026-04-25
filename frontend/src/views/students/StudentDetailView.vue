@@ -48,11 +48,22 @@
         </v-card-text>
       </v-card>
 
-      <!-- WARs — placeholder until Micah implements UC-27 -->
+      <!-- WARs — UC-34 entry point for instructors -->
       <v-card variant="outlined" class="mb-4">
         <v-card-title class="text-body-1 font-weight-bold pa-4 pb-0">Weekly Activity Reports (WARs)</v-card-title>
-        <v-card-text class="pa-4 pt-2 text-medium-emphasis text-body-2">
-          WAR history will appear here once implemented.
+        <v-card-text class="pa-4 pt-2">
+          <p v-if="!isInstructor" class="text-body-2 text-medium-emphasis">
+            WAR history is available to instructors.
+          </p>
+          <v-btn
+            v-else
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-file-chart-outline"
+            :to="`/reports/war-student/${student!.id}`"
+          >
+            Generate WAR Report
+          </v-btn>
         </v-card-text>
       </v-card>
 

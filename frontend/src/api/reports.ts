@@ -42,6 +42,18 @@ export interface PeerEvalStudentReport {
   weeks: PeerEvalWeekEntry[]
 }
 
+export interface WARWeekEntry {
+  weekStartDate: string
+  submitted: boolean
+  activities: WARActivityEntry[]
+}
+
+export interface WARStudentReport {
+  studentId: number
+  studentName: string
+  weeks: WARWeekEntry[]
+}
+
 export interface InstructorTeam {
   id: number
   teamName: string
@@ -73,6 +85,12 @@ export interface WARTeamReport {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const reportsApi = {
+  getWARStudentReport: (studentId: number, startWeek: string, endWeek: string) =>
+    api.get<{ success: boolean; data: WARStudentReport }>(
+      `/reports/war/students/${studentId}`,
+      { params: { startWeek, endWeek } }
+    ),
+
   getStudentAvailableWeeks: (studentId: number) =>
     api.get<{ success: boolean; data: string[] }>(`/reports/peer-evaluations/students/${studentId}/available-weeks`),
 

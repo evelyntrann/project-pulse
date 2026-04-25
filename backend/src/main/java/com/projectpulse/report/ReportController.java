@@ -48,6 +48,18 @@ public class ReportController {
                 reportService.getPeerEvalSectionReport(sectionId, weekStartDate)));
     }
 
+    // UC-34: WAR report for one student across a week range.
+    @GetMapping("/war/students/{studentId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<WARStudentReportResponse>> getWARStudentReport(
+            @PathVariable Long studentId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startWeek,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endWeek,
+            Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                reportService.getWARStudentReport(studentId, startWeek, endWeek, currentUserId(auth))));
+    }
+
     // UC-33: active weeks for the student's section (drives start/end week pickers).
     @GetMapping("/peer-evaluations/students/{studentId}/available-weeks")
     @PreAuthorize("hasRole('INSTRUCTOR')")
