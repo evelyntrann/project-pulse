@@ -56,11 +56,22 @@
         </v-card-text>
       </v-card>
 
-      <!-- Peer Evaluations — placeholder until Micah implements UC-28/29 -->
+      <!-- Peer Evaluations — UC-33 entry point for instructors -->
       <v-card variant="outlined">
         <v-card-title class="text-body-1 font-weight-bold pa-4 pb-0">Peer Evaluations</v-card-title>
-        <v-card-text class="pa-4 pt-2 text-medium-emphasis text-body-2">
-          Peer evaluation history will appear here once implemented.
+        <v-card-text class="pa-4 pt-2">
+          <p v-if="!isInstructor" class="text-body-2 text-medium-emphasis">
+            Peer evaluation history is available to instructors.
+          </p>
+          <v-btn
+            v-else
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-chart-bar"
+            :to="`/reports/peer-eval-student/${student!.id}`"
+          >
+            Generate Peer Eval Report
+          </v-btn>
         </v-card-text>
       </v-card>
     </template>
@@ -102,7 +113,8 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-const isAdmin = computed(() => auth.user?.role === 'ADMIN')
+const isAdmin      = computed(() => auth.user?.role === 'ADMIN')
+const isInstructor = computed(() => auth.user?.role === 'INSTRUCTOR')
 
 const student = ref<StudentDetail | null>(null)
 const loading = ref(true)
