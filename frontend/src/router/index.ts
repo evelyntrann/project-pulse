@@ -227,7 +227,15 @@ const router = createRouter({
         },
 
         // ── Placeholder slots for remaining UCs ───────────────────────────
-        // Micah  → UC-33–34: /reports/peer-eval-student, /reports/war-student
+        // ── Peer Eval Student Report (INSTRUCTOR) — UC-33 ─────────────────
+        {
+          path: 'reports/peer-eval-student/:studentId',
+          name: 'reports-peer-eval-student',
+          component: () => import('@/views/reports/PeerEvalStudentReportView.vue'),
+          meta: { requiresAuth: true, roles: ['INSTRUCTOR'] },
+        },
+
+        // Micah  → UC-34: /reports/war-student
       ],
     },
 

@@ -48,6 +48,27 @@ public class ReportController {
                 reportService.getPeerEvalSectionReport(sectionId, weekStartDate)));
     }
 
+    // UC-33: active weeks for the student's section (drives start/end week pickers).
+    @GetMapping("/peer-evaluations/students/{studentId}/available-weeks")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<List<LocalDate>>> getStudentAvailableWeeks(
+            @PathVariable Long studentId) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                reportService.getStudentAvailableWeeks(studentId)));
+    }
+
+    // UC-33: peer eval report for one student across a week range.
+    @GetMapping("/peer-evaluations/students/{studentId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<PeerEvalStudentReportResponse>> getPeerEvalStudentReport(
+            @PathVariable Long studentId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startWeek,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endWeek,
+            Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                reportService.getPeerEvalStudentReport(studentId, startWeek, endWeek, currentUserId(auth))));
+    }
+
     // UC-32: teams the logged-in instructor is assigned to.
     @GetMapping("/war/instructor/teams")
     @PreAuthorize("hasRole('INSTRUCTOR')")

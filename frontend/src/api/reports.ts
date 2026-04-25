@@ -29,6 +29,19 @@ export interface PeerEvalSectionReport {
   nonSubmitters: string[]
 }
 
+export interface PeerEvalWeekEntry {
+  weekStartDate: string
+  grade: number
+  evaluations: EvaluatorEntry[]
+}
+
+export interface PeerEvalStudentReport {
+  studentId: number
+  studentName: string
+  maxGrade: number
+  weeks: PeerEvalWeekEntry[]
+}
+
 export interface InstructorTeam {
   id: number
   teamName: string
@@ -60,6 +73,15 @@ export interface WARTeamReport {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const reportsApi = {
+  getStudentAvailableWeeks: (studentId: number) =>
+    api.get<{ success: boolean; data: string[] }>(`/reports/peer-evaluations/students/${studentId}/available-weeks`),
+
+  getPeerEvalStudentReport: (studentId: number, startWeek: string, endWeek: string) =>
+    api.get<{ success: boolean; data: PeerEvalStudentReport }>(
+      `/reports/peer-evaluations/students/${studentId}`,
+      { params: { startWeek, endWeek } }
+    ),
+
   getInstructorSections: () =>
     api.get<{ success: boolean; data: InstructorSection[] }>('/reports/instructor/sections'),
 

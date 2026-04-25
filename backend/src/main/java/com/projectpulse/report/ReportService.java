@@ -202,7 +202,96 @@ public class ReportService {
         return new WARTeamReportResponse(weekStartDate, team.getName(), studentEntries, nonSubmitters);
     }
 
+    // UC-33: active weeks for the section the student belongs to.
+    public List<LocalDate> getStudentAvailableWeeks(Long studentId) {
+        Long sectionId = userRepository.findSectionIdByStudentId(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student is not enrolled in a section"));
+        return getAvailableWeeksForSection(sectionId);
+    }
+
+    // UC-33: per-student peer eval report across a week range — INSTRUCTOR only.
+    @Transactional(readOnly = true)
+    public PeerEvalStudentReportResponse getPeerEvalStudentReport(
+            Long studentId, LocalDate startWeek, LocalDate endWeek, Long instructorId) {
+
+        if (!teamRepository.existsByInstructorsIdAndStudentsId(instructorId, studentId))
+            throw new IllegalArgumentException("You are not assigned to a team with this student");
+
+        UserEntity student = userRepository.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student not found"));
+
+        Long sectionId = userRepository.findSectionIdByStudentId(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student is not enrolled in a section"));
+
+        BigDecimal maxGrade = getMaxGradeForSection(sectionId);
+
+        List<LocalDate> weeksInRange = activeWeekRepository.findBySectionIdOrderByWeekStartDate(sectionId)
+                .stream()
+                .filter(w -> w.isActive()
+                        && !w.getWeekStartDate().isBefore(startWeek)
+                        && !w.getWeekStartDate().isAfter(endWeek))
+                .map(w -> w.getWeekStartDate())
+                .toList();
+
+        List<PeerEvaluationEntity> allEvals = weeksInRange.isEmpty() ? List.of()
+                : peerEvalRepository.findByEvaluateeIdAndWeekStartDateInWithScores(studentId, weeksInRange);
+
+        Set<Long> evaluatorIds = allEvals.stream()
+                .map(PeerEvaluationEntity::getEvaluatorId)
+                .collect(Collectors.toSet());
+        Map<Long, UserEntity> userMap = userRepository.findAllById(evaluatorIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, u -> u));
+
+        Map<LocalDate, List<PeerEvaluationEntity>> byWeek = allEvals.stream()
+                .collect(Collectors.groupingBy(PeerEvaluationEntity::getWeekStartDate));
+
+        List<PeerEvalWeekEntryDto> weeks = weeksInRange.stream()
+                .map(week -> {
+                    List<PeerEvaluationEntity> weekEvals = byWeek.getOrDefault(week, List.of());
+
+                    BigDecimal grade = BigDecimal.ZERO;
+                    if (!weekEvals.isEmpty()) {
+                        int sumOfTotals = weekEvals.stream()
+                                .mapToInt(ev -> ev.getScores().stream()
+                                        .mapToInt(PeerEvaluationScoreEntity::getScore).sum())
+                                .sum();
+                        grade = BigDecimal.valueOf(sumOfTotals)
+                                .divide(BigDecimal.valueOf(weekEvals.size()), 2, RoundingMode.HALF_UP);
+                    }
+
+                    List<EvaluatorEntryDto> evaluations = weekEvals.stream()
+                            .map(ev -> {
+                                UserEntity evaluator = userMap.get(ev.getEvaluatorId());
+                                String name = evaluator != null
+                                        ? evaluator.getFirstName() + " " + evaluator.getLastName()
+                                        : "Unknown";
+                                int total = ev.getScores().stream()
+                                        .mapToInt(PeerEvaluationScoreEntity::getScore).sum();
+                                return new EvaluatorEntryDto(name, total,
+                                        ev.getPublicComment(), ev.getPrivateComment());
+                            })
+                            .sorted(Comparator.comparing(EvaluatorEntryDto::evaluatorName))
+                            .toList();
+
+                    return new PeerEvalWeekEntryDto(week, grade, evaluations);
+                })
+                .toList();
+
+        String studentName = student.getFirstName() + " " + student.getLastName();
+        return new PeerEvalStudentReportResponse(studentId, studentName, maxGrade, weeks);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private BigDecimal getMaxGradeForSection(Long sectionId) {
+        return sectionRepository.findById(sectionId)
+                .filter(s -> s.getRubricId() != null)
+                .flatMap(s -> rubricRepository.findById(s.getRubricId()))
+                .map(r -> r.getCriteria().stream()
+                        .map(CriterionEntity::getMaxScore)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .orElse(BigDecimal.ZERO);
+    }
 
     private StudentPeerEvalEntryDto buildStudentEntry(
             UserEntity student,
