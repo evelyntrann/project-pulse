@@ -15,3 +15,4 @@ target/
 
 # Env
 .env
+backend/src/main/resources/application-local.properties

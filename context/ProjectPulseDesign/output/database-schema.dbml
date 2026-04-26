@@ -1,0 +1,215 @@
+// Project Pulse — Database Schema
+// Paste this into https://dbdiagram.io to render the diagram
+// ----------------------------------------------------------------
+
+// ----------------------------------------------------------------
+// USERS
+// Single table for all roles: ADMIN, INSTRUCTOR, STUDENT
+// ----------------------------------------------------------------
+Table users {
+  id            bigint      [pk, increment]
+  email         varchar(255) [unique, not null]
+  password_hash varchar(255) [not null]
+  first_name    varchar(100) [not null]
+  last_name     varchar(100) [not null]
+  role          varchar(20)  [not null, note: 'ADMIN | INSTRUCTOR | STUDENT']
+  is_active     boolean      [not null, default: true]
+  created_at    timestamp    [not null, default: `now()`]
+
+  note: 'One table for all user types. role column acts as discriminator.'
+}
+
+// ----------------------------------------------------------------
+// RUBRICS & CRITERIA
+// Created by Admin. One rubric is chosen per section.
+// ----------------------------------------------------------------
+Table rubrics {
+  id          bigint       [pk, increment]
+  name        varchar(255) [unique, not null, note: 'E.g. Peer Eval Rubric v1']
+  created_by  bigint       [not null, ref: > users.id, note: 'Admin who created it']
+  created_at  timestamp    [not null, default: `now()`]
+}
+
+Table criteria {
+  id          bigint        [pk, increment]
+  rubric_id   bigint        [not null, ref: > rubrics.id]
+  name        varchar(255)  [not null, note: 'E.g. Quality of work']
+  description text          [not null, note: 'E.g. How do you rate the quality of this teammate work?']
+  max_score   decimal(5,2)  [not null, note: 'Must be a positive number']
+  order_index int           [not null, note: 'Display order within rubric']
+
+  indexes {
+    (rubric_id, order_index) [unique]
+  }
+}
+
+// ----------------------------------------------------------------
+// SECTIONS
+// Represents one academic year offering (e.g., 2024-2025).
+// Each section uses one rubric for all peer evaluations that year.
+// ----------------------------------------------------------------
+Table sections {
+  id         bigint       [pk, increment]
+  name       varchar(20)  [unique, not null, note: 'Format: YYYY-YYYY e.g. 2024-2025']
+  start_date date         [not null]
+  end_date   date         [not null]
+  rubric_id  bigint       [not null, ref: > rubrics.id, note: 'Rubric used for peer evals in this section']
+  created_at timestamp    [not null, default: `now()`]
+}
+
+// ----------------------------------------------------------------
+// ACTIVE WEEKS
+// Admin marks which Monday-starting weeks require WAR + peer eval submissions.
+// week_start_date is always a Monday (per glossary).
+// ----------------------------------------------------------------
+Table active_weeks {
+  id               bigint  [pk, increment]
+  section_id       bigint  [not null, ref: > sections.id]
+  week_start_date  date    [not null, note: 'Always a Monday — used as week identifier']
+  is_active        boolean [not null, default: true, note: 'false = holiday/break week, no submissions required']
+
+  indexes {
+    (section_id, week_start_date) [unique]
+  }
+}
+
+// ----------------------------------------------------------------
+// TEAMS
+// A team belongs to one section. Team name must be unique.
+// ----------------------------------------------------------------
+Table teams {
+  id          bigint        [pk, increment]
+  name        varchar(255)  [unique, not null]
+  description text
+  website_url varchar(500)
+  section_id  bigint        [not null, ref: > sections.id]
+  created_at  timestamp     [not null, default: `now()`]
+}
+
+// ----------------------------------------------------------------
+// SECTION_STUDENTS
+// Students enrolled in a section (accepted invite, not yet on a team).
+// A student must be in a section before being assigned to a team.
+// ----------------------------------------------------------------
+Table section_students {
+  section_id   bigint    [not null, ref: > sections.id]
+  student_id   bigint    [not null, ref: > users.id]
+  enrolled_at  timestamp [not null, default: `now()`]
+
+  indexes {
+    (section_id, student_id) [pk]
+  }
+}
+
+// ----------------------------------------------------------------
+// TEAM_STUDENTS
+// Students assigned to a specific team (subset of section_students).
+// ----------------------------------------------------------------
+Table team_students {
+  team_id     bigint    [not null, ref: > teams.id]
+  student_id  bigint    [not null, ref: > users.id]
+  joined_at   timestamp [not null, default: `now()`]
+
+  indexes {
+    (team_id, student_id) [pk]
+  }
+}
+
+// ----------------------------------------------------------------
+// TEAM_INSTRUCTORS
+// Instructors assigned to a team. An instructor can be on multiple teams.
+// ----------------------------------------------------------------
+Table team_instructors {
+  team_id        bigint    [not null, ref: > teams.id]
+  instructor_id  bigint    [not null, ref: > users.id]
+  assigned_at    timestamp [not null, default: `now()`]
+
+  indexes {
+    (team_id, instructor_id) [pk]
+  }
+}
+
+// ----------------------------------------------------------------
+// INVITATIONS
+// Tracks email invitations sent to students and instructors.
+// Each invite has a unique token used in the registration link.
+// ----------------------------------------------------------------
+Table invitations {
+  id          bigint       [pk, increment]
+  email       varchar(255) [not null]
+  role        varchar(20)  [not null, note: 'STUDENT | INSTRUCTOR']
+  section_id  bigint       [ref: > sections.id, note: 'Required for STUDENT invites; null for INSTRUCTOR']
+  token       varchar(255) [unique, not null, note: 'Unique per invite, used in registration URL']
+  invited_by  bigint       [not null, ref: > users.id, note: 'Admin who sent the invite']
+  expires_at  timestamp    [not null]
+  accepted_at timestamp    [note: 'null = not yet accepted']
+  created_at  timestamp    [not null, default: `now()`]
+}
+
+// ----------------------------------------------------------------
+// WARS (Weekly Activity Reports)
+// One WAR per student per active week. Contains multiple activities.
+// ----------------------------------------------------------------
+Table wars {
+  id               bigint     [pk, increment]
+  student_id       bigint     [not null, ref: > users.id]
+  team_id          bigint     [not null, ref: > teams.id]
+  week_start_date  date       [not null, note: 'Monday date of the submission week']
+  status           varchar(20)[not null, default: 'DRAFT', note: 'DRAFT | SUBMITTED']
+  submitted_at     timestamp  [note: 'null until student submits']
+
+  indexes {
+    (student_id, week_start_date) [unique, note: 'One WAR per student per week']
+  }
+}
+
+// ----------------------------------------------------------------
+// ACTIVITIES
+// Line items within a WAR.
+// Each row = one task/activity the student worked on that week.
+// ----------------------------------------------------------------
+Table activities {
+  id               bigint        [pk, increment]
+  war_id           bigint        [not null, ref: > wars.id]
+  category         varchar(255)
+  planned_activity varchar(500)  [not null]
+  description      text
+  planned_hours    decimal(5,2)
+  actual_hours     decimal(5,2)
+  status           varchar(20)   [note: 'TODO | IN_PROGRESS | DONE']
+}
+
+// ----------------------------------------------------------------
+// PEER_EVALUATIONS
+// One evaluation per evaluator-evaluatee pair per week.
+// E.g., in a 5-person team, each student submits 4 evaluations.
+// ----------------------------------------------------------------
+Table peer_evaluations {
+  id               bigint    [pk, increment]
+  evaluator_id     bigint    [not null, ref: > users.id, note: 'Student doing the rating']
+  evaluatee_id     bigint    [not null, ref: > users.id, note: 'Student being rated']
+  team_id          bigint    [not null, ref: > teams.id]
+  week_start_date  date      [not null]
+  public_comment   text      [note: 'Visible to the evaluatee']
+  private_comment  text      [note: 'Only visible to the instructor']
+  submitted_at     timestamp [not null, default: `now()`]
+
+  indexes {
+    (evaluator_id, evaluatee_id, week_start_date) [unique, note: 'One eval per pair per week']
+  }
+}
+
+// ----------------------------------------------------------------
+// PEER_EVALUATION_SCORES
+// One score row per criterion per peer evaluation.
+// ----------------------------------------------------------------
+Table peer_evaluation_scores {
+  id                   bigint       [pk, increment]
+  peer_evaluation_id   bigint       [not null, ref: > peer_evaluations.id]
+  criterion_id         bigint       [not null, ref: > criteria.id]
+  score                decimal(5,2) [not null, note: 'Must be between 0 and criterion.max_score']
+
+  indexes {
+    (peer_evaluation_id, criterion_id) [unique]
+  }
+}
