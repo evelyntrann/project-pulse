@@ -88,3 +88,27 @@ SELECT s.id, u.id
 FROM sections s, users u
 WHERE s.name = '2024-2025'
   AND u.email = 'dr.wei@tcu.edu';
+
+-- ── Active weeks for 2024-2025 section (Spring 2026 semester) ────────────────
+
+INSERT IGNORE INTO active_weeks (section_id, week_start_date, is_active)
+SELECT s.id, week_date, 1
+FROM sections s
+CROSS JOIN (
+  SELECT '2026-01-12' AS week_date UNION ALL
+  SELECT '2026-01-19' UNION ALL
+  SELECT '2026-01-26' UNION ALL
+  SELECT '2026-02-02' UNION ALL
+  SELECT '2026-02-09' UNION ALL
+  SELECT '2026-02-16' UNION ALL
+  SELECT '2026-02-23' UNION ALL
+  SELECT '2026-03-02' UNION ALL
+  SELECT '2026-03-09' UNION ALL
+  SELECT '2026-03-16' UNION ALL
+  SELECT '2026-03-23' UNION ALL
+  SELECT '2026-03-30' UNION ALL
+  SELECT '2026-04-06' UNION ALL
+  SELECT '2026-04-13' UNION ALL
+  SELECT '2026-04-20'
+) weeks
+WHERE s.name = '2024-2025';
