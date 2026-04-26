@@ -75,10 +75,11 @@ WHERE t.name = 'SmartCampus'
 
 -- ── Assign instructor to SmartCampus team ────────────────────────────────────
 
-UPDATE teams t
-JOIN users u ON u.email = 'dr.wei@tcu.edu'
-SET t.instructor_id = u.id
-WHERE t.name = 'SmartCampus';
+INSERT IGNORE INTO team_instructors (team_id, instructor_id)
+SELECT t.id, u.id
+FROM teams t, users u
+WHERE t.name = 'SmartCampus'
+  AND u.email = 'dr.wei@tcu.edu';
 
 -- ── Enroll instructor in section ─────────────────────────────────────────────
 

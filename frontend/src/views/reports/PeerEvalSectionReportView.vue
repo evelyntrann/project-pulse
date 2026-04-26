@@ -225,8 +225,9 @@ onMounted(async () => {
       noSectionError.value = true
       return
     }
-    selectedSectionId.value = sections.value[0].id
-    await loadWeeks(sections.value[0].id)
+    const first = sections.value[0]!
+    selectedSectionId.value = first.id
+    await loadWeeks(first.id)
   } catch (err: any) {
     showErrorSnack(err.response?.data?.error || 'Failed to load sections.')
   } finally {
@@ -254,7 +255,7 @@ async function loadWeeks(sectionId: number) {
     const res = await reportsApi.getSectionAvailableWeeks(sectionId)
     availableWeeks.value = res.data.data
     if (availableWeeks.value.length > 0) {
-      const latest = availableWeeks.value[availableWeeks.value.length - 1]
+      const latest = availableWeeks.value[availableWeeks.value.length - 1]!
       selectedWeek.value = latest
       await loadReport()
     }

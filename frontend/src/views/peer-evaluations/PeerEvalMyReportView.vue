@@ -155,7 +155,7 @@ onMounted(async () => {
 
     // Default to the most recent week (last element — list is sorted ascending).
     if (availableWeeks.value.length > 0) {
-      const latest = availableWeeks.value[availableWeeks.value.length - 1]
+      const latest = availableWeeks.value[availableWeeks.value.length - 1]!
       selectedWeek.value = latest
       await loadReport(latest)
     }
