@@ -66,7 +66,6 @@
       <v-card variant="outlined" class="mb-6">
         <v-card-title class="text-body-1 font-weight-bold pa-4 pb-0">Peer Evaluation Rubric</v-card-title>
         <v-card-text class="pa-4">
-          <!-- TODO: Replace with rubric selector once Angel builds UC-1 rubric package -->
           <v-text-field
             v-model.number="form.rubricId"
             label="Rubric ID"
@@ -74,8 +73,6 @@
             variant="outlined"
             density="comfortable"
             :rules="rubricRules"
-            hint="Rubric selection UI coming soon — enter rubric ID for now"
-            persistent-hint
           />
         </v-card-text>
       </v-card>

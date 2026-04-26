@@ -36,15 +36,6 @@
       </v-col>
     </v-row>
 
-    <!-- Student placeholder (Micah / Angel to fill in) -->
-    <v-alert
-      v-if="auth.user?.role === 'STUDENT'"
-      type="info"
-      variant="tonal"
-      class="mt-4"
-    >
-      Your dashboard features (Weekly Activity Reports, Peer Evaluations) are coming soon.
-    </v-alert>
   </v-container>
 </template>
 
@@ -73,6 +64,7 @@ interface QuickLink {
 }
 
 const allLinks: QuickLink[] = [
+  // ADMIN
   {
     title: 'Sections',
     description: 'Create and manage course sections, configure active weeks, and invite students.',
@@ -82,12 +74,88 @@ const allLinks: QuickLink[] = [
     roles: ['ADMIN'],
   },
   {
+    title: 'Rubrics',
+    description: 'Create and manage peer evaluation rubrics used across sections.',
+    icon: 'mdi-clipboard-list-outline',
+    color: 'deep-purple',
+    to: '/rubrics',
+    roles: ['ADMIN'],
+  },
+  {
+    title: 'Instructors',
+    description: 'Invite instructors and assign them to senior design teams.',
+    icon: 'mdi-account-tie',
+    color: 'teal',
+    to: '/instructors',
+    roles: ['ADMIN'],
+  },
+  {
+    title: 'Students',
+    description: 'View all enrolled students and their section and team assignments.',
+    icon: 'mdi-account-school',
+    color: 'orange',
+    to: '/students',
+    roles: ['ADMIN', 'INSTRUCTOR'],
+  },
+  {
     title: 'Teams',
-    description: 'Create senior design teams, assign students and instructors.',
+    description: 'Create senior design teams and assign students and instructors.',
     icon: 'mdi-account-group',
     color: 'secondary',
     to: '/teams',
     roles: ['ADMIN', 'INSTRUCTOR'],
+  },
+
+  // INSTRUCTOR
+  {
+    title: 'WAR Team Report',
+    description: "View your team's weekly activity report across all active weeks.",
+    icon: 'mdi-chart-line',
+    color: 'primary',
+    to: '/reports/war-team',
+    roles: ['INSTRUCTOR'],
+  },
+  {
+    title: 'Peer Eval Report',
+    description: 'View aggregated peer evaluation results for your section.',
+    icon: 'mdi-file-chart-outline',
+    color: 'teal',
+    to: '/reports/peer-eval-section',
+    roles: ['INSTRUCTOR'],
+  },
+
+  // STUDENT
+  {
+    title: 'Weekly Activity Report',
+    description: 'Submit your weekly hours, accomplishments, and planned tasks.',
+    icon: 'mdi-clipboard-text-outline',
+    color: 'primary',
+    to: '/war',
+    roles: ['STUDENT'],
+  },
+  {
+    title: 'Peer Evaluations',
+    description: 'Submit your weekly evaluations for each teammate.',
+    icon: 'mdi-account-star-outline',
+    color: 'secondary',
+    to: '/peer-evaluations',
+    roles: ['STUDENT'],
+  },
+  {
+    title: 'My Peer Eval Report',
+    description: 'View the peer evaluation feedback you have received from your team.',
+    icon: 'mdi-chart-bar',
+    color: 'teal',
+    to: '/peer-evaluations/my-report',
+    roles: ['STUDENT'],
+  },
+  {
+    title: 'Team WAR Report',
+    description: "View your team's weekly activity report across all active weeks.",
+    icon: 'mdi-chart-line',
+    color: 'orange',
+    to: '/reports/war-team',
+    roles: ['STUDENT'],
   },
 ]
 
